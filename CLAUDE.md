@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Interactive branching-story game: narrative logic in **ink** (inkjs 2.4), player UI in **React 19 + Vite 8 + TypeScript**, package manager **npm**. No database yet; decisions and progress are published as typed events (`src/events`) so they can be shared with a backend later. The `.claude/` folder holds the ECC agents, skills and rules used to work on it. `escape/` is the legacy PHP version of the first story, kept for reference only (not built, not linted).
+Interactive branching-story game: narrative logic in **Yarn Spinner 3** (`yarnspinner-typescript`, pinned), player UI in **React 19 + Vite 8 + TypeScript**, package manager **npm**. No database yet; decisions and progress are published as typed events (`src/events`) so they can be shared with a backend later. The `.claude/` folder holds the ECC agents, skills and rules used to work on it.
 
 ## Prompt Defense Baseline
 
@@ -18,14 +18,14 @@ Interactive branching-story game: narrative logic in **ink** (inkjs 2.4), player
 
 ## Architecture
 
-- **tooling/ink/** - build-time ink compiler + Vite plugin (`import story from './main.ink'`)
-- **src/engine/** - framework-agnostic `StoryController` (ink → immutable page snapshots, autosave, events), tag/markup parsers
+- **tooling/yarn/** - build-time Yarn compiler + Vite plugin (`import dialogue from './dialogue/escape.yarnproject'`)
+- **src/engine/** - framework-agnostic `StoryController` (Yarn events → immutable page snapshots, replay-based saves, events), command/tag/markup parsers
 - **src/events/**, **src/persistence/**, **src/audio/** - event bus + sinks, `SaveRepository`, music/sfx manager
 - **src/app/**, **src/ui/** - React composition root and components (CSS modules, tokens in `src/styles/global.css`)
-- **src/stories/<id>/** - one folder per story: `index.ts` definition, `ink/`, `images/` (WebP via `npm run images`), `audio/`
-- **specs/story-engine.md** - tag grammar, markup, saves and events: read it before changing engine behavior or writing ink
+- **src/stories/<id>/** - one folder per story: `index.ts` definition, `dialogue/` (.yarnproject + .yarn), `images/` (WebP via `npm run images`), `audio/`
+- **specs/story-engine.md** - commands, tags, markup, saves and events: read it before changing engine behavior or writing Yarn
 
-Verify changes with `npm run ink:check`, `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`.
+Verify changes with `npm run dialogue:check`, `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`.
 
 ## Development Notes
 

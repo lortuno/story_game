@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 import { StoryContext } from '../app/story-context'
+import { plainText } from '../engine/markup'
 import { getStrings } from '../i18n/strings'
 import { testStory } from '../test/fixtures'
 import { formatDuration, formatStoryDate } from './format'
@@ -17,17 +18,28 @@ const wrap = (node: ReactNode) =>
 
 describe('RichText', () => {
   it('links only to allow-listed keys, in a new tab', () => {
-    wrap(<RichText text="Lee [los docs](docs) y [esto](https://evil.example)." />)
+    const text = 'Lee los docs y esto.'
+    wrap(
+      <RichText
+        text={{
+          text,
+          marks: [
+            { kind: 'link', start: 4, end: 12, key: 'docs' },
+            { kind: 'link', start: 15, end: 19, key: 'unknown' },
+          ],
+        }}
+      />,
+    )
     const link = screen.getByRole('link', { name: /los docs/ })
     expect(link).toHaveAttribute('href', 'https://example.com/docs')
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
     expect(screen.getAllByRole('link')).toHaveLength(1)
-    expect(screen.getByText(/esto/)).toBeInTheDocument()
+    expect(screen.getByText('esto')).toBeInTheDocument()
   })
 
   it('toggles tooltips with click and closes them with Escape', async () => {
     const user = userEvent.setup()
-    wrap(<RichText text="Hay que [echar](?Multiplicar)." />)
+    wrap(<RichText text={{ text: 'Hay que echar.', marks: [{ kind: 'tip', start: 8, end: 13, tip: 'Multiplicar' }] }} />)
     const trigger = screen.getByRole('button', { name: 'echar' })
     expect(trigger).toHaveAccessibleDescription('Multiplicar')
 
@@ -35,6 +47,31 @@ describe('RichText', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true')
     await user.keyboard('{Escape}')
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('renders bold anywhere, including inside a tip, and drops overlapping interactive marks', () => {
+    wrap(
+      <RichText
+        text={{
+          text: 'Un acertijo clave',
+          marks: [
+            { kind: 'bold', start: 0, end: 2 },
+            { kind: 'tip', start: 3, end: 11, tip: 'Pista' },
+            { kind: 'bold', start: 3, end: 7 },
+            { kind: 'link', start: 5, end: 17, key: 'docs' },
+          ],
+        }}
+      />,
+    )
+    expect(screen.getByText('Un').tagName).toBe('STRONG')
+    expect(screen.getByRole('button', { name: 'acertijo' }).querySelector('strong')).toHaveTextContent('acer')
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
+
+  it('shows HTML in story text literally', () => {
+    const { container } = wrap(<RichText text={{ text: '<img src=x onerror=alert(1)>', marks: [] }} />)
+    expect(container.querySelector('img')).toBeNull()
+    expect(container).toHaveTextContent('<img src=x onerror=alert(1)>')
   })
 })
 
@@ -67,11 +104,12 @@ describe('PageView', () => {
     wrap(
       <PageView
         blocks={[
-          { kind: 'heading', level: 3, text: 'Nota' },
-          { kind: 'group', style: 'postit', items: ['ldrcc 5'] },
-          { kind: 'group', style: 'olist', items: ['uno', 'dos'] },
-          { kind: 'group', style: 'list', items: ['tres'] },
-          { kind: 'paragraph', text: 'Fin.' },
+          { kind: 'heading', level: 3, text: plainText('Nota') },
+          { kind: 'group', style: 'postit', items: [plainText('ldrcc 5')] },
+          { kind: 'group', style: 'olist', items: [plainText('uno'), plainText('dos')] },
+          { kind: 'group', style: 'list', items: [plainText('tres')] },
+          { kind: 'paragraph', text: plainText('Fin.'), speaker: null },
+          { kind: 'paragraph', text: plainText('¿Atascados?'), speaker: 'Tina' },
         ]}
       />,
     )
@@ -79,6 +117,7 @@ describe('PageView', () => {
     expect(screen.getByText('ldrcc 5')).toBeInTheDocument()
     expect(screen.getAllByRole('list')).toHaveLength(2)
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
+    expect(screen.getByText('Tina:')).toBeInTheDocument()
   })
 })
 

@@ -1,4 +1,4 @@
-import type { Block, GroupStyle } from '../engine/types'
+import type { Block, GroupStyle, StyledText } from '../engine/types'
 import styles from './PageView.module.css'
 import { RichText } from './RichText'
 import { StoryFigure } from './StoryFigure'
@@ -25,6 +25,7 @@ function BlockView({ block }: { readonly block: Block }) {
     case 'paragraph':
       return (
         <p className={styles.paragraph}>
+          {block.speaker && <strong className={styles.speaker}>{block.speaker}: </strong>}
           <RichText text={block.text} />
         </p>
       )
@@ -43,7 +44,7 @@ function BlockView({ block }: { readonly block: Block }) {
   }
 }
 
-function GroupView({ style, items }: { readonly style: GroupStyle; readonly items: readonly string[] }) {
+function GroupView({ style, items }: { readonly style: GroupStyle; readonly items: readonly StyledText[] }) {
   const lines = items.map((item, index) => <RichText key={index} text={item} />)
 
   if (style === 'list' || style === 'olist') {

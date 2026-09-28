@@ -1,13 +1,14 @@
 import { useEffect, useId, useState } from 'react'
 import { useStoryContext } from '../app/story-context'
+import type { StyledText } from '../engine/types'
 import styles from './KeypadLock.module.css'
 import { RichText } from './RichText'
 
 interface KeypadLockProps {
-  readonly label: string
+  readonly label: StyledText
   /** Number of dial positions; the answer must be exactly this many digits. */
   readonly length: number
-  /** Text of the ink choice taken on submit; announced as the # key's action. */
+  /** Text of the Yarn option taken on submit; announced as the # key's action. */
   readonly submitLabel: string
   readonly onSubmit: (code: string) => void
 }

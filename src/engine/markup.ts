@@ -1,42 +1,89 @@
 /**
- * Minimal inline markup for story text. Parsed into tokens (never into HTML strings),
- * so story content can't inject markup into the page.
- *
- *   **bold**          strong emphasis
- *   [label](key)      external link; `key` is looked up in the story's `links` map
- *   [label](?tip)     tooltip / toggletip with the text after `?`
+ * Converts Yarn Spinner markup attributes into our `StyledText` marks.
+ * Supported: `[b]…[/b]`, `[link key=libros]…[/link]`, `[tip text="…"]…[/tip]`.
+ * Other attributes (e.g. Yarn's built-in `character`) are ignored.
  */
-export type InlineToken =
-  | { readonly kind: 'text'; readonly text: string }
-  | { readonly kind: 'strong'; readonly text: string }
-  | { readonly kind: 'link'; readonly label: string; readonly key: string }
-  | { readonly kind: 'tip'; readonly label: string; readonly tip: string }
+import type { Mark, StyledText } from './types'
 
-const INLINE = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)/g
-
-export function parseInline(source: string): readonly InlineToken[] {
-  const tokens: InlineToken[] = []
-  let cursor = 0
-
-  for (const match of source.matchAll(INLINE)) {
-    const start = match.index
-    if (start > cursor) tokens.push({ kind: 'text', text: source.slice(cursor, start) })
-
-    const [whole, strong, label, target] = match
-    if (strong !== undefined) tokens.push({ kind: 'strong', text: strong })
-    else if (target.startsWith('?')) tokens.push({ kind: 'tip', label, tip: target.slice(1).trim() })
-    else tokens.push({ kind: 'link', label, key: target.trim() })
-
-    cursor = start + whole.length
-  }
-
-  if (cursor < source.length) tokens.push({ kind: 'text', text: source.slice(cursor) })
-  return tokens
+/** The structural subset of yarnspinner-typescript's markup attribute we rely on. */
+export interface YarnMarkupAttribute {
+  readonly name: string
+  readonly position: number
+  readonly length: number
+  readonly properties?: Readonly<Record<string, YarnMarkupValue | undefined>>
 }
 
-/** Plain text of a marked-up string (for alt text, aria labels and event payloads). */
-export function toPlainText(source: string): string {
-  return parseInline(source)
-    .map((token) => (token.kind === 'text' || token.kind === 'strong' ? token.text : token.label))
-    .join('')
+interface YarnMarkupValue {
+  readonly type?: string
+  readonly stringValue?: string
+  readonly integerValue?: number
+  readonly floatValue?: number
+  readonly boolValue?: boolean
+}
+
+const IGNORED_ATTRIBUTES: ReadonlySet<string> = new Set(['character', 'nomarkup', 'trimwhitespace'])
+// A `[name …]…[/name]` pair still in the text means Yarn didn't parse it (usually an unescaped ':').
+const UNPARSED_MARKUP = /\[([a-z]+)\b[^\]]*\][^[]*\[\/\1\]/i
+
+export function plainText(text: string): StyledText {
+  return { text, marks: [] }
+}
+
+export function styledFromYarn(
+  text: string,
+  attributes: readonly YarnMarkupAttribute[] | undefined,
+  warn: (message: string) => void,
+): StyledText {
+  if (UNPARSED_MARKUP.test(text)) {
+    warn(`Unparsed markup in "${text}". Escape ':' as '\\:' inside Yarn lines.`)
+  }
+  const marks: Mark[] = []
+  for (const attribute of attributes ?? []) {
+    const mark = toMark(attribute, warn)
+    if (mark) marks.push(mark)
+  }
+  return { text, marks }
+}
+
+/** Prefixes a line with its Yarn speaker ("Hacker: …"), shifting marks accordingly. */
+export function withPrefix(styled: StyledText, prefix: string): StyledText {
+  const offset = prefix.length
+  return {
+    text: prefix + styled.text,
+    marks: styled.marks.map((mark) => ({ ...mark, start: mark.start + offset, end: mark.end + offset })),
+  }
+}
+
+function toMark(attribute: YarnMarkupAttribute, warn: (message: string) => void): Mark | null {
+  const start = attribute.position
+  const end = attribute.position + attribute.length
+  switch (attribute.name) {
+    case 'b':
+      return { kind: 'bold', start, end }
+    case 'link': {
+      const key = stringProperty(attribute, 'key')
+      if (key) return { kind: 'link', start, end, key }
+      warn('[link] needs a key, e.g. [link key=libros]…[/link]')
+      return null
+    }
+    case 'tip': {
+      const tip = stringProperty(attribute, 'text')
+      if (tip) return { kind: 'tip', start, end, tip }
+      warn('[tip] needs text, e.g. [tip text="…"]…[/tip]')
+      return null
+    }
+    default:
+      if (!IGNORED_ATTRIBUTES.has(attribute.name)) warn(`Unknown markup [${attribute.name}]`)
+      return null
+  }
+}
+
+function stringProperty(attribute: YarnMarkupAttribute, name: string): string | null {
+  const value = attribute.properties?.[name]
+  if (!value) return null
+  if (value.type === 'string' || value.type === undefined) return value.stringValue?.trim() || null
+  if (value.type === 'integer') return String(value.integerValue)
+  if (value.type === 'float') return String(value.floatValue)
+  if (value.type === 'bool') return String(value.boolValue)
+  return null
 }

@@ -3,26 +3,26 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Interactive branching stories powered by ink, with images and music.",
+  "description": "Interactive branching stories powered by Yarn Spinner, with images and music.",
   "engines": {
     "node": ">=22.18"
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run ink:check && tsc -b && vite build",
+    "build": "npm run dialogue:check && tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "ink:check": "node scripts/check-ink.ts",
+    "dialogue:check": "node scripts/check-dialogue.ts",
     "images": "node scripts/optimize-images.ts"
   },
   "dependencies": {
-    "inkjs": "^2.4.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "yarnspinner-typescript": "1.1.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",

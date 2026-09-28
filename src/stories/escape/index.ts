@@ -1,7 +1,7 @@
 import { assertHttpsLinks, collectImages, collectUrls } from '../assets'
 import type { StoryDefinition } from '../types'
 import dimensions from './images/dimensions.json'
-import ink from './ink/main.ink'
+import dialogue from './dialogue/escape.yarnproject'
 
 const images = import.meta.glob<string>('./images/*.webp', { eager: true, query: '?url', import: 'default' })
 const music = import.meta.glob<string>('./audio/music/*.{opus,ogg,mp3,m4a}', { eager: true, query: '?url', import: 'default' })
@@ -19,7 +19,8 @@ const story: StoryDefinition = {
     timeLimitMinutes: 60,
     cover: 'header_police',
   },
-  ink,
+  dialogue,
+  startNode: 'apartamento',
   images: collectImages(images, dimensions),
   audio: { music: collectUrls(music), sfx: collectUrls(sfx) },
   links: assertHttpsLinks({

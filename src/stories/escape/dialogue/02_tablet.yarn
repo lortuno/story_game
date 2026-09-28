@@ -1,0 +1,38 @@
+title: tablet
+---
+<<sfx desbloqueo>>
+Habéis desbloqueado la tablet. Al hacerlo veis el correo abierto, con un mensaje destacado en pantalla. Además, buscáis inmediatamente el historial de las últimas ubicaciones visitadas. Curiosamente, todas coinciden con lugares en los que Murderchef ha matado siguiendo su modus operandi.
+Tenéis la corazonada de que los lugares y el mensaje están relacionados de alguna forma.
+<<jump mensaje>>
+===
+
+title: mensaje
+---
+Historial de ubicaciones #subheading
+<<image historial "Mapa con el historial de ubicaciones">>
+Mensaje de\: Anónimo #subheading
+ñs vsds rdys urmfp rm ñs dohirmyr fotrvvopm. Br im nñpwir jsvos fpmfr giodyr rm kimop, fpd nñpwird jsvos fpmfr giodyr rm dr`yor,ntr. Ims ,smxsms frdfr yi tiys fr ,sup. Fpd vsdsd fotrvvopm yi bodoys fr grntrtp. Mpd br,pd `tpmyp. #block:clue
+<<hint "Consultar con el hacker de vuestra unidad.">>
+Deduce que el mensaje encriptado puede estar basado en alguna sustitución de letras del teclado qwerty.
+<<hint "Pedir orientación al sargento Tomás Núñez.">>
+Os sugiere que averigüéis cómo llegar a los sitios del historial.
+<<hint "Implorarle de nuevo al hacker (¿qwerqué?).">>
+Piensa que se podría descodificar moviéndose una letra a la izquierda.
+¿Qué dirección vais a tomar ahora?
+-> Arriba, derecha, abajo, arriba, arriba, derecha, izquierda
+    <<jump pista_falsa>>
+-> Arriba, derecha, arriba, derecha, abajo, arriba, izquierda
+    <<jump pista_falsa>>
+-> Arriba, derecha, abajo, arriba, izquierda, arriba, derecha
+    <<jump pista_falsa>>
+-> Arriba, izquierda, arriba, derecha, abajo, arriba, derecha
+    <<jump chalet>>
+===
+
+title: pista_falsa
+---
+<<set $fallos = $fallos + 1>>
+¡Vaya! Habéis seguido una pista que no era y habéis perdido el rastro de Murderchef. Os destituyen del cuerpo y os pasáis los días comiendo doritos en la penumbra de vuestro cuarto. Looosers. #outcome:fail
+-> Volver atrás y reintentar
+    <<jump mensaje>>
+===

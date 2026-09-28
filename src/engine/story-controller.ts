@@ -1,28 +1,41 @@
 /**
- * Framework-agnostic game loop around the ink runtime.
+ * Framework-agnostic game loop around the Yarn Spinner runtime.
  *
  * - Produces immutable `StorySnapshot`s (React reads them with useSyncExternalStore).
- * - Autosaves the ink state at the *start* of every page, so resuming replays the page
- *   deterministically (ink's RNG seed lives in its state).
+ * - A page is everything Yarn delivers up to the next option set.
+ * - Saves are the list of decisions so far; resuming replays them on a fresh Dialogue
+ *   (Yarn has no state snapshot; the story must stay deterministic, i.e. avoid random()).
  * - Publishes story events (decisions, progress) for current and future consumers.
  */
-import { Story } from 'inkjs'
+import { Dialogue, Library, type DialogueEvent } from 'yarnspinner-typescript'
 import type { EventBus } from '../events/event-bus'
 import type { StoryEventPayloads, StoryEventType } from '../events/types'
-import { createMemorySaveRepository, SAVE_VERSION, type SaveGame, type SaveRepository } from '../persistence/save-repository'
+import {
+  createMemorySaveRepository,
+  MAX_SAVE_STEPS,
+  SAVE_VERSION,
+  type SaveGame,
+  type SaveRepository,
+  type SaveStep,
+} from '../persistence/save-repository'
+import { parseCommand } from './commands'
 import { createId } from './ids'
+import { styledFromYarn } from './markup'
 import { normalizeAnswer } from './normalize'
-import { buildPageContent, type RawLine } from './page-builder'
+import { buildPageContent, type StoryItem } from './page-builder'
 import type { ChoiceView, InputRequest, Page, PlayStats, Presentation, StorySnapshot } from './types'
 
-export interface CompiledInk {
+export interface CompiledDialogue {
+  /** Compiled Yarn program as JSON (from tooling/yarn). */
   readonly json: string
   readonly hash: string
 }
 
 export interface StoryControllerOptions {
   readonly storyId: string
-  readonly ink: CompiledInk
+  readonly dialogue: CompiledDialogue
+  /** Yarn node the story starts at. */
+  readonly startNode: string
   readonly events?: EventBus
   readonly saves?: SaveRepository
   readonly now?: () => number
@@ -31,7 +44,10 @@ export interface StoryControllerOptions {
 }
 
 export const MAX_INPUT_LENGTH = 200
-const INK_WARNING = 1 // inkjs ErrorType.Warning
+/** Upper bound on runtime events per page, so a broken script can't hang the tab. */
+const MAX_EVENTS_PER_PAGE = 10_000
+const INTERNAL_VARIABLE = /^Yarn\.Internal\./
+const YARN_INTERNAL_TAG = /^(line:|lastline$)/
 
 const INITIAL_PRESENTATION: Presentation = { scene: null, music: null }
 const INITIAL_STATS: PlayStats = { choices: 0, hintsRevealed: 0, failures: 0 }
@@ -47,40 +63,50 @@ const TITLE_SNAPSHOT: StorySnapshot = {
   error: null,
 }
 
+/** Raw output of the runtime for one page, before it becomes blocks. */
+interface RawPage {
+  readonly path: string | null
+  readonly items: readonly StoryItem[]
+  readonly choices: readonly ChoiceView[]
+  readonly ended: boolean
+}
+
+type EventResult = 'content' | { readonly choices: readonly ChoiceView[]; readonly ended: boolean } | null
+
 export class StoryController {
-  private readonly story: Story
   private readonly storyId: string
   private readonly storyHash: string
+  private readonly programJson: string
+  private readonly startNode: string
   private readonly events: EventBus | null
   private readonly saves: SaveRepository
   private readonly now: () => number
   private readonly newId: () => string
   private readonly warn: (message: string) => void
   private readonly listeners = new Set<() => void>()
-  /** Variables fed by # input; excluded from variable.changed (password values must not leak). */
+  /** Variables fed by #input; excluded from variable.changed (password values must not leak). */
   private readonly inputVariables = new Set<string>()
+  private dialogue: Dialogue | null = null
+  private currentNode: string | null = null
+  private steps: readonly SaveStep[] = []
+  private knownVariables: Readonly<Record<string, unknown>> = {}
+  /** The page shown right after a resume was already reported in the earlier session. */
+  private replayingCurrentPage = false
   private snapshot: StorySnapshot = TITLE_SNAPSHOT
   private lastSave: SaveGame | null = null
-  private observedVariablesState: unknown = null
   private pageCounter = 0
   private eventSeq = 0
 
   constructor(options: StoryControllerOptions) {
     this.storyId = options.storyId
-    this.storyHash = options.ink.hash
+    this.storyHash = options.dialogue.hash
+    this.programJson = options.dialogue.json
+    this.startNode = options.startNode
     this.events = options.events ?? null
     this.saves = options.saves ?? createMemorySaveRepository()
     this.now = options.now ?? Date.now
     this.newId = options.createId ?? createId
     this.warn = options.onWarning ?? ((message) => console.warn(`[story:${options.storyId}] ${message}`))
-
-    this.story = new Story(options.ink.json)
-    this.story.allowExternalFunctionFallbacks = true
-    this.story.BindExternalFunction('normalize', normalizeAnswer, true)
-    this.story.onError = (message, type) => {
-      if (type === INK_WARNING) this.warn(message)
-      else this.fail(new Error(message))
-    }
   }
 
   // ---- store protocol (stable references for useSyncExternalStore) ----
@@ -104,8 +130,13 @@ export class StoryController {
   start(): void {
     this.saves.clear(this.storyId)
     this.lastSave = null
-    this.story.ResetState()
     this.setSnapshot({ ...TITLE_SNAPSHOT, status: 'playing', sessionId: this.newId(), resumedAt: this.now() })
+    try {
+      this.resetDialogue()
+    } catch (error) {
+      this.fail(error)
+      return
+    }
     this.emit('session.started', { resumed: false, storyHash: this.storyHash })
     this.showNextPage()
   }
@@ -114,19 +145,23 @@ export class StoryController {
   resume(): boolean {
     const save = this.loadCompatibleSave()
     if (!save) return false
+
+    let presentation: Presentation
     try {
-      this.story.state.LoadJson(save.inkState)
+      presentation = this.replay(save.steps)
     } catch (error) {
-      this.warn(`Discarding unreadable save: ${errorMessage(error)}`)
+      this.warn(`Discarding a save that no longer replays: ${errorMessage(error)}`)
       this.saves.clear(this.storyId)
       return false
     }
+
     this.lastSave = save
+    this.replayingCurrentPage = true
     this.setSnapshot({
       ...TITLE_SNAPSHOT,
       status: 'playing',
       sessionId: save.sessionId,
-      presentation: save.presentation,
+      presentation,
       stats: save.stats,
       playtimeMs: save.playtimeMs,
       resumedAt: this.now(),
@@ -144,17 +179,17 @@ export class StoryController {
       return
     }
     const choice = page.choices.find((candidate) => candidate.index === index)
-    if (choice) this.pick(page, choice)
+    if (choice) this.pick(page, choice, { kind: 'choice', index: choice.index })
   }
 
   submitInput(value: string): void {
     const page = this.activePage()
     const input = page?.input
     const choice = page?.choices[0]
-    if (!page || !input || !choice) return
+    if (!page || !input || !choice || !this.dialogue) return
 
-    if (!this.story.variablesState.GlobalVariableExistsWithName(input.variable)) {
-      this.fail(new Error(`# input variable "${input.variable}" is not declared with VAR`))
+    if (this.dialogue.getVariable(input.variable) === undefined) {
+      this.fail(new Error(`#input variable "$${input.variable}" is not declared with <<declare>>`))
       return
     }
     const answer = value.trim().slice(0, MAX_INPUT_LENGTH)
@@ -162,14 +197,14 @@ export class StoryController {
       this.warn(`Rejected answer for "${input.variable}": expected ${input.length} digits`)
       return
     }
-    this.story.variablesState.$(input.variable, answer)
+    this.dialogue.setVariable(input.variable, answer)
     this.emit('input.submitted', {
       path: page.path,
       variable: input.variable,
       kind: input.kind,
       ...(input.kind === 'password' ? {} : { value: answer }),
     })
-    this.pick(page, choice)
+    this.pick(page, choice, { kind: 'input', value: answer })
   }
 
   revealHint(index: number): void {
@@ -186,74 +221,147 @@ export class StoryController {
 
   /** Stores the current playtime (call on page hide) and optionally returns to the title screen. */
   persist({ exitToTitle = false }: { exitToTitle?: boolean } = {}): void {
-    if (this.snapshot.status !== 'playing') {
-      if (exitToTitle) this.setSnapshot(TITLE_SNAPSHOT)
-      return
-    }
-    if (this.lastSave) {
+    if (this.snapshot.status === 'playing' && this.lastSave) {
       this.lastSave = { ...this.lastSave, playtimeMs: this.livePlaytime(), savedAt: new Date(this.now()).toISOString() }
       this.saves.save(this.lastSave)
     }
     if (exitToTitle) this.setSnapshot(TITLE_SNAPSHOT)
   }
 
+  // ---- runtime ----
+
+  private resetDialogue(): void {
+    const library = new Library()
+    library.registerFunction('normalize', normalizeAnswer)
+    // Parse per session: playthroughs must never share mutable program state.
+    this.dialogue = new Dialogue(JSON.parse(this.programJson), {
+      startAt: this.startNode,
+      library,
+      logError: (message) => this.warn(message),
+    })
+    if (!this.dialogue.nodeExists(this.startNode)) throw new Error(`Start node "${this.startNode}" does not exist`)
+    this.currentNode = null
+    this.steps = []
+    this.knownVariables = this.dialogue.getVariables()
+  }
+
+  /** Runs the dialogue up to the next option set (or the end). */
+  private readPage(): RawPage {
+    const dialogue = this.requireDialogue()
+    const items: StoryItem[] = []
+    let path: string | null = null
+    let seen = 0
+
+    while (seen < MAX_EVENTS_PER_PAGE) {
+      const batch = dialogue.continue()
+      if (batch.length === 0) throw new Error('The dialogue stopped without options or an end')
+      for (const event of batch) {
+        seen++
+        const result = this.readEvent(event, items)
+        if (result === 'content') path ??= this.currentNode
+        else if (result !== null) return { path: path ?? this.currentNode, items, ...result }
+      }
+    }
+    throw new Error(`No option set within ${MAX_EVENTS_PER_PAGE} events (infinite loop in the script?)`)
+  }
+
+  private readEvent(event: DialogueEvent, items: StoryItem[]): EventResult {
+    switch (event.type) {
+      case 'nodeStart':
+        this.currentNode = event.nodeName
+        return null
+      case 'line':
+        items.push({
+          kind: 'line',
+          text: styledFromYarn(event.text, event.markup?.attributes, (message) => this.warn(`${this.currentNode}: ${message}`)),
+          speaker: event.speaker ?? null,
+          tags: (event.tags ?? []).filter((tag) => !YARN_INTERNAL_TAG.test(tag)),
+        })
+        return 'content'
+      case 'command':
+        items.push({ kind: 'command', ...parseCommand(event.command) })
+        return 'content'
+      case 'options': {
+        const choices = event.options.filter((option) => option.isAvailable).map(({ index, text }) => ({ index, text }))
+        if (choices.length === 0) throw new Error(`No available options in node "${this.currentNode}"`)
+        return { choices, ended: false }
+      }
+      case 'dialogueComplete':
+        return { choices: [], ended: true }
+      default:
+        return null
+    }
+  }
+
+  /** Re-runs saved decisions silently; returns the presentation at the current page. */
+  private replay(steps: readonly SaveStep[]): Presentation {
+    this.resetDialogue()
+    const dialogue = this.requireDialogue()
+    let presentation = INITIAL_PRESENTATION
+    for (const step of steps) {
+      const raw = this.readPage()
+      if (raw.ended) throw new Error('the story ended earlier than the saved game')
+      const { content, presentation: next } = buildPageContent(raw.items, presentation)
+      presentation = next
+      if (step.kind === 'input') {
+        if (!content.input) throw new Error(`expected an answer field on "${raw.path}"`)
+        dialogue.setVariable(content.input.variable, step.value)
+        dialogue.selectOption(raw.choices[0].index)
+      } else {
+        if (!raw.choices.some((choice) => choice.index === step.index)) throw new Error(`option ${step.index} is gone`)
+        dialogue.selectOption(step.index)
+      }
+    }
+    this.steps = steps
+    this.knownVariables = dialogue.getVariables()
+    return presentation
+  }
+
   // ---- internals ----
 
-  private pick(page: Page, choice: ChoiceView): void {
+  private pick(page: Page, choice: ChoiceView, step: SaveStep): void {
     this.emit('choice.made', { path: page.path, index: choice.index, text: choice.text })
     try {
-      this.story.ChooseChoiceIndex(choice.index)
+      this.requireDialogue().selectOption(choice.index)
     } catch (error) {
       this.fail(error)
       return
     }
+    this.steps = [...this.steps, step].slice(-MAX_SAVE_STEPS)
     this.setSnapshot({ ...this.snapshot, stats: { ...this.snapshot.stats, choices: this.snapshot.stats.choices + 1 } })
     this.showNextPage()
   }
 
   private showNextPage(): void {
-    this.observeVariables()
-    const pageStartState = this.story.state.toJson()
     const presentationBefore = this.snapshot.presentation
     const statsBefore = this.snapshot.stats
 
-    const lines: RawLine[] = []
-    let path: string | null = null
+    let raw: RawPage
     try {
-      while (this.story.canContinue && this.snapshot.status !== 'error') {
-        const text = this.story.Continue() ?? ''
-        lines.push({ text, tags: this.story.currentTags ?? [] })
-        // Right after a choice ink still points at the choice's origin; the first
-        // line actually output tells us where the page really is.
-        path ??= toKnotPath(this.story.state.previousPathString)
-      }
+      raw = this.readPage()
     } catch (error) {
       this.fail(error)
       return
     }
-    if (this.snapshot.status === 'error') return // reported through story.onError
 
-    const { content, presentation, warnings } = buildPageContent(lines, presentationBefore)
-    for (const warning of warnings) this.warn(`${path ?? '?'}: ${warning}`)
-
-    const choices = this.story.currentChoices.map((choice) => ({ index: choice.index, text: choice.text }))
+    const { content, presentation, warnings } = buildPageContent(raw.items, presentationBefore)
+    for (const warning of warnings) this.warn(`${raw.path ?? '?'}: ${warning}`)
     if (content.input) {
       this.inputVariables.add(content.input.variable)
-      if (choices.length !== 1) this.warn(`${path ?? '?'}: a page with # input must offer exactly one choice`)
+      if (raw.choices.length !== 1) this.warn(`${raw.path ?? '?'}: a page with #input must offer exactly one option`)
     }
+    this.publishVariableChanges()
 
-    const page: Page = { id: ++this.pageCounter, path, ...content, choices }
+    const page: Page = { id: ++this.pageCounter, path: raw.path, ...content, choices: raw.choices }
     const stats = { ...statsBefore, failures: statsBefore.failures + (content.outcome === 'fail' ? 1 : 0) }
-    const ended = choices.length === 0
 
-    if (ended) {
+    if (raw.ended) {
       this.finish(page, presentation, stats)
       return
     }
-
     this.setSnapshot({ ...this.snapshot, page, presentation, stats, revealedHints: [] })
-    this.writeSave(pageStartState, presentationBefore, statsBefore)
-    this.emit('page.shown', { pageId: page.id, path, outcome: page.outcome, choiceCount: choices.length })
+    this.writeSave(statsBefore)
+    this.emit('page.shown', { pageId: page.id, path: page.path, outcome: page.outcome, choiceCount: page.choices.length })
   }
 
   private finish(page: Page, presentation: Presentation, stats: PlayStats): void {
@@ -265,7 +373,22 @@ export class StoryController {
     this.emit('story.ended', { ending: page.ending ?? 'end', playtimeMs, ...stats })
   }
 
-  private writeSave(inkState: string, presentation: Presentation, stats: PlayStats): void {
+  private publishVariableChanges(): void {
+    const previous = this.knownVariables
+    const current = this.requireDialogue().getVariables()
+    this.knownVariables = current
+    if (this.replayingCurrentPage) {
+      this.replayingCurrentPage = false
+      return
+    }
+    for (const [name, value] of Object.entries(current)) {
+      if (INTERNAL_VARIABLE.test(name) || this.inputVariables.has(name) || Object.is(previous[name], value)) continue
+      this.emit('variable.changed', { name, value: toEventValue(value) })
+    }
+  }
+
+  /** Stats are saved as they were at the start of the page, since resuming replays it. */
+  private writeSave(stats: PlayStats): void {
     const sessionId = this.snapshot.sessionId
     if (!sessionId) return
     this.lastSave = {
@@ -273,8 +396,7 @@ export class StoryController {
       storyId: this.storyId,
       storyHash: this.storyHash,
       sessionId,
-      inkState,
-      presentation,
+      steps: this.steps,
       stats,
       playtimeMs: this.livePlaytime(),
       savedAt: new Date(this.now()).toISOString(),
@@ -293,15 +415,9 @@ export class StoryController {
     return save
   }
 
-  /** ink replaces its variables state on ResetState, so (re)attach the observer when it changes. */
-  private observeVariables(): void {
-    const variablesState = this.story.variablesState
-    if (variablesState === this.observedVariablesState) return
-    this.observedVariablesState = variablesState
-    variablesState.variableChangedEventCallbacks.push((name) => {
-      if (this.inputVariables.has(name)) return
-      this.emit('variable.changed', { name, value: toEventValue(this.story.variablesState.$(name)) })
-    })
+  private requireDialogue(): Dialogue {
+    if (!this.dialogue) throw new Error('The story has not been started')
+    return this.dialogue
   }
 
   private activePage(): Page | null {
@@ -314,7 +430,7 @@ export class StoryController {
   }
 
   private fail(error: unknown): void {
-    if (this.snapshot.status === 'error') return // one incident, one event (ink may report several errors)
+    if (this.snapshot.status === 'error') return // one incident, one event
     const message = errorMessage(error)
     console.error(`[story:${this.storyId}]`, error)
     this.setSnapshot({ ...this.snapshot, status: 'error', error: message, resumedAt: null })
@@ -347,22 +463,11 @@ function isValidAnswer(input: InputRequest, answer: string): boolean {
   return answer.length === input.length && /^[0-9]+$/.test(answer)
 }
 
-/** "tablet.mensaje.3.c-0" → "tablet.mensaje": drop ink's internal index/choice segments. */
-export function toKnotPath(raw: string | null): string | null {
-  if (!raw) return null
-  const named: string[] = []
-  for (const segment of raw.split('.')) {
-    if (!/^[A-Za-z_]\w*$/.test(segment)) break
-    named.push(segment)
-  }
-  return named.length > 0 ? named.join('.') : null
-}
-
 function toEventValue(value: unknown): string | number | boolean | null {
   if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return value
   }
-  return String(value) // ink lists and divert targets
+  return value === undefined ? null : String(value)
 }
 
 function errorMessage(error: unknown): string {

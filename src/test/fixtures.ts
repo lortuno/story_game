@@ -1,4 +1,4 @@
-import mini from '../engine/__fixtures__/mini.ink'
+import mini from '../engine/__fixtures__/mini/mini.yarnproject'
 import { createEventBus } from '../events/event-bus'
 import type { StoryEvent } from '../events/types'
 import { createMemorySaveRepository } from '../persistence/save-repository'
@@ -17,7 +17,8 @@ export const testStory: StoryDefinition = {
     timeLimitMinutes: 10,
     cover: 'hall',
   },
-  ink: mini,
+  dialogue: mini,
+  startNode: 'start',
   images: { hall: { src: '/hall.webp', width: 800, height: 400 } },
   audio: { music: { calm: '/calm.opus' }, sfx: {} },
   links: { docs: 'https://example.com/docs' },

@@ -12,8 +12,7 @@ const game: SaveGame = {
   storyId: 'escape',
   storyHash: 'abc',
   sessionId: 's1',
-  inkState: '{}',
-  presentation: { scene: 'x', music: null },
+  steps: [{ kind: 'choice', index: 2 }, { kind: 'input', value: '0426' }],
   stats: { choices: 1, hintsRevealed: 0, failures: 0 },
   playtimeMs: 1000,
   savedAt: '2026-01-01T00:00:00.000Z',
@@ -80,7 +79,18 @@ describe('createMemorySaveRepository', () => {
 })
 
 describe('isSaveGame', () => {
-  it.each([null, 'x', { ...game, version: 99 }, { ...game, stats: null }, { ...game, presentation: { scene: 1 } }])(
+  it.each([
+    null,
+    'x',
+    { ...game, version: 1 },
+    { ...game, stats: null },
+    { ...game, steps: 'nope' },
+    { ...game, steps: [{ kind: 'choice', index: -1 }] },
+    { ...game, steps: [{ kind: 'choice', index: 1.5 }] },
+    { ...game, steps: [{ kind: 'input', value: 'x'.repeat(201) }] },
+    { ...game, steps: [{ kind: 'teleport' }] },
+    { ...game, steps: Array.from({ length: 5_001 }, () => ({ kind: 'choice', index: 0 })) },
+  ])(
     'rejects %j',
     (value) => {
       expect(isSaveGame(value)).toBe(false)

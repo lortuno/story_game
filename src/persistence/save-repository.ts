@@ -2,9 +2,18 @@
  * Save games. The repository interface keeps storage swappable: localStorage today,
  * a backend later, without touching the engine.
  */
-import type { PlayStats, Presentation } from '../engine/types'
+import type { PlayStats } from '../engine/types'
 
-export const SAVE_VERSION = 1
+export const SAVE_VERSION = 2
+
+/**
+ * One player decision. A save is the list of decisions since the start; resuming replays
+ * them (Yarn has no state snapshot, and this story is deterministic).
+ */
+export type SaveStep = { readonly kind: 'choice'; readonly index: number } | { readonly kind: 'input'; readonly value: string }
+
+export const MAX_SAVE_STEPS = 5_000
+const MAX_STEP_VALUE_LENGTH = 200
 
 export interface SaveGame {
   readonly version: typeof SAVE_VERSION
@@ -12,9 +21,8 @@ export interface SaveGame {
   /** Compiled story hash; a save from a different story build is discarded. */
   readonly storyHash: string
   readonly sessionId: string
-  /** ink state JSON captured at the start of the current page. */
-  readonly inkState: string
-  readonly presentation: Presentation
+  /** Decisions taken before the current page. */
+  readonly steps: readonly SaveStep[]
   readonly stats: PlayStats
   readonly playtimeMs: number
   readonly savedAt: string
@@ -90,21 +98,24 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isNonNegativeNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0
 
-const isNullableString = (value: unknown): value is string | null => value === null || typeof value === 'string'
+function isSaveStep(value: unknown): value is SaveStep {
+  if (!isRecord(value)) return false
+  if (value.kind === 'choice') return Number.isInteger(value.index) && isNonNegativeNumber(value.index)
+  return value.kind === 'input' && typeof value.value === 'string' && value.value.length <= MAX_STEP_VALUE_LENGTH
+}
 
 export function isSaveGame(value: unknown): value is SaveGame {
   if (!isRecord(value) || value.version !== SAVE_VERSION) return false
-  const { presentation, stats } = value
+  const { steps, stats } = value
   return (
     typeof value.storyId === 'string' &&
     typeof value.storyHash === 'string' &&
     typeof value.sessionId === 'string' &&
-    typeof value.inkState === 'string' &&
     typeof value.savedAt === 'string' &&
     isNonNegativeNumber(value.playtimeMs) &&
-    isRecord(presentation) &&
-    isNullableString(presentation.scene) &&
-    isNullableString(presentation.music) &&
+    Array.isArray(steps) &&
+    steps.length <= MAX_SAVE_STEPS &&
+    steps.every(isSaveStep) &&
     isRecord(stats) &&
     isNonNegativeNumber(stats.choices) &&
     isNonNegativeNumber(stats.hintsRevealed) &&

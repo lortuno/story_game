@@ -8,7 +8,7 @@ interface StoryFigureProps {
   readonly images: readonly ImageRef[]
 }
 
-/** One image, or a gallery when an ink line carries several # image tags. */
+/** One image, or a gallery for consecutive <<image>> commands. */
 export function StoryFigure({ images }: StoryFigureProps) {
   const { story } = useStoryContext()
   const available = images.filter((image) => story.images[image.key])

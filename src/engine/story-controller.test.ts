@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createEventBus } from '../events/event-bus'
 import type { StoryEvent } from '../events/types'
 import { createMemorySaveRepository, type SaveRepository } from '../persistence/save-repository'
-import mini from './__fixtures__/mini.ink'
-import { StoryController, toKnotPath } from './story-controller'
+import mini from './__fixtures__/mini/mini.yarnproject'
+import { plainText } from './markup'
+import { StoryController, type CompiledDialogue } from './story-controller'
 
 let clock = 0
 let ids = 0
@@ -11,12 +12,13 @@ let events: StoryEvent[] = []
 let saves: SaveRepository
 let warnings: string[] = []
 
-function createController(ink = mini) {
+function createController(dialogue: CompiledDialogue = mini, startNode = 'start') {
   const bus = createEventBus()
   bus.subscribe((event) => events.push(event))
   return new StoryController({
     storyId: 'mini',
-    ink,
+    dialogue,
+    startNode,
     events: bus,
     saves,
     now: () => clock,
@@ -33,6 +35,7 @@ beforeEach(() => {
   events = []
   warnings = []
   saves = createMemorySaveRepository()
+  vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
 describe('StoryController', () => {
@@ -48,11 +51,13 @@ describe('StoryController', () => {
     const { status, page, presentation } = controller.getSnapshot()
 
     expect(status).toBe('playing')
-    expect(page?.blocks).toEqual([{ kind: 'heading', level: 2, text: 'Welcome' }])
+    expect(page?.path).toBe('start')
+    expect(page?.blocks).toEqual([{ kind: 'heading', level: 2, text: plainText('Welcome') }])
     expect(page?.hints.map((hint) => hint.summary)).toEqual(['Ask a friend', 'Ask again'])
-    expect(page?.input).toEqual({ variable: 'answer', kind: 'password', label: 'Secret word:', length: null })
+    expect(page?.input).toEqual({ variable: 'answer', kind: 'password', label: plainText('Secret word:'), length: null })
     expect(presentation).toEqual({ scene: 'hall', music: 'calm' })
     expect(eventTypes()).toEqual(['session.started', 'page.shown'])
+    expect(warnings).toEqual([])
   })
 
   it('checks answers with the bound normalize() and never publishes password values', () => {
@@ -60,11 +65,19 @@ describe('StoryController', () => {
     controller.start()
     controller.submitInput('  Open Sésame! ')
 
-    expect(controller.getSnapshot().page?.path).toBe('door')
-    expect(controller.getSnapshot().page?.sfx).toEqual(['creak'])
+    const page = controller.getSnapshot().page
+    expect(page?.path).toBe('door')
+    expect(page?.sfx).toEqual(['creak'])
     const submitted = events.find((event) => event.type === 'input.submitted')
     expect(submitted?.payload).toEqual({ path: 'start', variable: 'answer', kind: 'password' })
     expect(events.some((event) => event.type === 'variable.changed' && event.payload.name === 'answer')).toBe(false)
+  })
+
+  it('hides options whose condition is false', () => {
+    const controller = createController()
+    controller.start()
+    controller.submitInput('opensesame')
+    expect(controller.getSnapshot().page?.choices.map((choice) => choice.text)).toEqual(['Left', 'Right'])
   })
 
   it('publishes variable changes and counts failures', () => {
@@ -75,9 +88,7 @@ describe('StoryController', () => {
     const { page, stats } = controller.getSnapshot()
     expect(page?.outcome).toBe('fail')
     expect(stats).toMatchObject({ choices: 1, failures: 1 })
-    expect(events).toContainEqual(
-      expect.objectContaining({ type: 'variable.changed', payload: { name: 'score', value: -1 } }),
-    )
+    expect(events).toContainEqual(expect.objectContaining({ type: 'variable.changed', payload: { name: 'score', value: -1 } }))
   })
 
   it('ignores choose() on input pages and unknown choice indexes', () => {
@@ -125,9 +136,11 @@ describe('StoryController', () => {
     })
   })
 
-  it('resumes a saved game on the same page with the same session', () => {
+  it('resumes by replaying saved decisions, with presentation and playtime restored', () => {
     const first = createController()
     first.start()
+    first.submitInput('wrong')
+    first.choose(0)
     first.submitInput('opensesame')
     clock += 2_000
     first.persist({ exitToTitle: true })
@@ -139,29 +152,40 @@ describe('StoryController', () => {
     const snapshot = second.getSnapshot()
     expect(snapshot.page?.path).toBe('door')
     expect(snapshot.page?.choices.map((choice) => choice.text)).toEqual(['Left', 'Right'])
-    expect(snapshot.sessionId).toBe(first.getSnapshot().sessionId ?? snapshot.sessionId)
     expect(snapshot.playtimeMs).toBe(2_000)
+    expect(snapshot.stats).toMatchObject({ choices: 3, failures: 1 })
     expect(snapshot.presentation).toEqual({ scene: 'hall', music: 'calm' })
   })
 
+  it('does not republish variable changes that were replayed', () => {
+    const first = createController()
+    first.start()
+    first.submitInput('wrong')
+    const published = eventTypes().filter((type) => type === 'variable.changed').length
+
+    createController().resume()
+    expect(eventTypes().filter((type) => type === 'variable.changed')).toHaveLength(published)
+  })
+
   it('discards saves made with another story build', () => {
-    const controller = createController()
-    controller.start()
+    createController().start()
     const other = createController({ ...mini, hash: 'different' })
     expect(other.hasSave()).toBe(false)
     expect(other.resume()).toBe(false)
     expect(warnings.some((warning) => warning.includes('older version'))).toBe(true)
   })
 
-  it('discards unreadable saves', () => {
+  it('discards saves whose decisions no longer replay', () => {
     const controller = createController()
     controller.start()
+    controller.submitInput('opensesame')
     const save = saves.load('mini')
     if (!save) throw new Error('expected a save')
-    saves.save({ ...save, inkState: '{broken' })
+    saves.save({ ...save, steps: [{ kind: 'choice', index: 9 }] })
 
     expect(createController().resume()).toBe(false)
     expect(saves.load('mini')).toBeNull()
+    expect(warnings.at(-1)).toContain('no longer replays')
   })
 
   it('moves to an error state when an input targets an undeclared variable', () => {
@@ -175,7 +199,12 @@ describe('StoryController', () => {
     expect(snapshot.status).toBe('error')
     expect(snapshot.error).toContain('undeclared_variable')
     expect(eventTypes().filter((type) => type === 'story.error')).toHaveLength(1)
-    vi.restoreAllMocks()
+  })
+
+  it('reports an unknown start node as an error', () => {
+    const controller = createController(mini, 'nowhere')
+    controller.start()
+    expect(controller.getSnapshot().status).toBe('error')
   })
 
   it('notifies subscribers until they unsubscribe', () => {
@@ -188,16 +217,5 @@ describe('StoryController', () => {
     controller.revealHint(0)
     expect(calls).toBeGreaterThan(0)
     expect(listener).toHaveBeenCalledTimes(calls)
-  })
-})
-
-describe('toKnotPath', () => {
-  it.each([
-    ['tablet.mensaje.3.c-0', 'tablet.mensaje'],
-    ['door.0', 'door'],
-    ['0.c-1', null],
-    [null, null],
-  ])('%s → %s', (raw, expected) => {
-    expect(toKnotPath(raw)).toBe(expected)
   })
 })

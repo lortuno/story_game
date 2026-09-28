@@ -1,0 +1,55 @@
+// Tiny story exercising every engine feature, used by the engine and UI tests.
+
+title: start
+---
+<<declare $answer = "">>
+<<declare $score = 0>>
+<<scene hall>>
+<<music calm>>
+Welcome #heading
+<<hint "Ask a friend">>
+A clue.
+<<hint "Ask again">>
+Another clue.
+Secret word\: #input:answer #kind:password
+-> Try
+    <<if normalize($answer) == "opensesame">>
+        <<jump door>>
+    <<else>>
+        <<jump wrong>>
+    <<endif>>
+===
+
+title: wrong
+---
+<<set $score = $score - 1>>
+Nope. #outcome:fail
+-> Retry
+    <<jump start>>
+===
+
+title: door
+---
+<<set $score = $score + 1>>
+<<sfx creak>>
+The door opens.
+-> Left
+    <<jump finale>>
+-> Right
+    <<jump broken_input>>
+-> Hidden <<if false>>
+    <<jump finale>>
+===
+
+title: broken_input
+---
+Type anything\: #input:undeclared_variable
+-> Go
+    <<jump finale>>
+===
+
+title: finale
+---
+<<music stop>>
+The end. #ending:win
+===

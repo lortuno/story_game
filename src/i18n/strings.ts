@@ -1,4 +1,4 @@
-/** UI chrome strings, selected by the story language. Story text itself lives in ink. */
+/** UI chrome strings, selected by the story language. Story text itself lives in the Yarn scripts. */
 export interface UiStrings {
   readonly loading: string
   readonly loadFailed: string

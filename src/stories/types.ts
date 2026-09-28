@@ -1,4 +1,4 @@
-import type { CompiledInk } from '../engine/story-controller'
+import type { CompiledDialogue } from '../engine/story-controller'
 
 export interface StoryImage {
   readonly src: string
@@ -30,9 +30,12 @@ export interface StoryMeta {
 export interface StoryDefinition {
   readonly id: string
   readonly meta: StoryMeta
-  readonly ink: CompiledInk
+  /** Compiled Yarn Spinner project (import of a .yarnproject file). */
+  readonly dialogue: CompiledDialogue
+  /** Yarn node where a new game starts. */
+  readonly startNode: string
   readonly images: Readonly<Record<string, StoryImage>>
   readonly audio: AudioLibrary
-  /** Link keys used by `[label](key)` in ink → https URLs. Only these URLs can be opened. */
+  /** Keys used by `[link key=…]` markup → https URLs. Only these URLs can be opened. */
   readonly links: Readonly<Record<string, string>>
 }

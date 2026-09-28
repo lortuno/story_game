@@ -1,0 +1,40 @@
+title: cocina
+---
+<<sfx puerta>>
+Al abrir la puerta descubrís una pequeña cocina con toda una suerte de utensilios, ingredientes y tarros; algunos contienen lo que muy probablemente son partes del cuerpo de sus víctimas, que Murderchef ha conservado para sus recetas.
+En un papel pone «la receta definitiva», junto a la dirección de una web en la que consultarla.
+<<jump receta>>
+===
+
+title: receta
+---
+[tip text="Pista\: es un acertijo"]La receta[/tip] #subheading
+<<image tarros "Tarros en la cocina de Murderchef">>
+Coger las piezas en el orden indicado, de una en una (o el número que se indique), y batir a 0.5 de velocidad.
+0\:24 · [link key=huevos]2 huevos[/link] #block:olist
+0\:40 · [link key=mantequilla]Mantequilla[/link] #block:olist
+2\:26 · [link key=sal]Sal[/link] #block:olist
+4\:19 · [link key=aceite]Aceite[/link] #block:olist
+2\:44 · [link key=cebolla]1 cebolla[/link] #block:olist
+0\:04 · [link key=patatas]Dos patatas[/link] #block:olist
+Ver en\: lawebsecretademurderchef/xxxxxxxx #block:note
+<<hint "Pedir ayuda a tu colega Carlos Piedra.">>
+Te indica que cada vídeo contiene una palabra de un [b]acertijo[/b], en ese orden, para formar una frase. Si el número de ingredientes es 2, son dos palabras. Te aconseja que apuntes lo que oigas y le des sentido en conjunto.
+<<hint "Volver a llamar a Carlos Piedra.">>
+¿Qué se ve con los ojos cerrados?
+Dirección de la web (lo que va en lugar de las x «_ _ _ _ _ _ _ _ _»)\: #input:respuesta
+-> Visitar la web
+    <<if normalize($respuesta) == "oscuridad">>
+        <<jump oscuridad>>
+    <<else>>
+        <<jump web_equivocada>>
+    <<endif>>
+===
+
+title: web_equivocada
+---
+<<set $fallos = $fallos + 1>>
+Error 404\: la página no existe. Murderchef no deja su receta a la vista de cualquiera. #outcome:fail
+-> Volver a la receta
+    <<jump receta>>
+===

@@ -1,10 +1,10 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
-import { inkPlugin } from './tooling/ink/vite-plugin-ink.ts'
+import { yarnPlugin } from './tooling/yarn/vite-plugin-yarn.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [inkPlugin(), react()],
+  plugins: [yarnPlugin(), react()],
   // Relative asset URLs: the build works at a domain root or in a sub-path
   // (e.g. GitHub Pages project sites at /<repo>/). Safe because there is no client-side routing.
   base: './',

@@ -1,7 +1,6 @@
 /**
- * ink tag grammar: `# key` or `# key: value`. Keys are case-insensitive.
- * `args` splits the value on whitespace, for tags whose values are identifiers
- * (e.g. `# input: respuesta password`); free text tags (`# hint: ...`) use `value`.
+ * Yarn line tag grammar: `#key` or `#key:value` (no spaces inside a tag). Keys are
+ * case-insensitive. `args` splits the value on whitespace (kept for multi-word values).
  */
 export interface ParsedTag {
   readonly key: string

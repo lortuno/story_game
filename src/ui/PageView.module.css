@@ -81,3 +81,9 @@ h3.heading {
     rotate: none;
   }
 }
+
+/* Yarn "Personaje: frase" lines */
+.speaker {
+  color: var(--accent-2);
+  font-family: var(--font-ui);
+}

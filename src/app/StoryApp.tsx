@@ -17,7 +17,13 @@ interface StoryAppProps {
 /** Wires one story to the engine, audio and UI. */
 export function StoryApp({ story, services }: StoryAppProps) {
   const [controller] = useState(
-    () => new StoryController({ storyId: story.id, ink: story.ink, events: services.events, saves: services.saves }),
+    () => new StoryController({
+        storyId: story.id,
+        dialogue: story.dialogue,
+        startNode: story.startNode,
+        events: services.events,
+        saves: services.saves,
+      }),
   )
   const [audio] = useState(() => new AudioManager(story.audio))
   const [context] = useState(() => ({ story, strings: getStrings(story.meta.lang) }))

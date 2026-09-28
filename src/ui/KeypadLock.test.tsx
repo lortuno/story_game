@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { StoryContext } from '../app/story-context'
+import { plainText } from '../engine/markup'
 import { getStrings } from '../i18n/strings'
 import { testStory } from '../test/fixtures'
 import { KeypadLock } from './KeypadLock'
@@ -9,7 +10,7 @@ import { KeypadLock } from './KeypadLock'
 function renderLock(onSubmit = vi.fn()) {
   render(
     <StoryContext value={{ story: testStory, strings: getStrings('es') }}>
-      <KeypadLock label="Combinación del keypad:" length={4} submitLabel="Probar la combinación" onSubmit={onSubmit} />
+      <KeypadLock label={plainText('Combinación del keypad:')} length={4} submitLabel="Probar la combinación" onSubmit={onSubmit} />
     </StoryContext>,
   )
   return onSubmit

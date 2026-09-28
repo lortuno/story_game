@@ -1,5 +1,5 @@
 /**
- * Available stories. Each one is a lazily-loaded chunk (ink JSON + asset map),
+ * Available stories. Each one is a lazily-loaded chunk (compiled Yarn program + asset map),
  * so adding stories doesn't grow the initial bundle.
  */
 import type { StoryDefinition } from './types'
