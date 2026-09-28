@@ -1,0 +1,83 @@
+.paragraph {
+  margin: 0 0 1rem;
+}
+
+.heading {
+  margin: 1.75rem 0 0.75rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+h2.heading {
+  font-size: clamp(1.6rem, 1.2rem + 2vw, 2.3rem);
+  text-transform: uppercase;
+}
+
+h3.heading {
+  font-size: 1.25rem;
+  color: var(--accent-2);
+}
+
+.heading:first-child {
+  margin-top: 0;
+}
+
+.list {
+  margin: 0 0 1rem;
+  padding-left: 1.4rem;
+}
+
+.list li {
+  margin-bottom: 0.35rem;
+}
+
+.postit {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 1.25rem;
+  padding: 1.1rem 1.4rem;
+  background: var(--postit);
+  color: var(--on-postit);
+  font: 1.15rem/1.5 var(--font-hand);
+  rotate: -1.5deg;
+  box-shadow: 4px 6px 14px rgb(0 0 0 / 0.45);
+}
+
+.postit p {
+  margin: 0;
+}
+
+.postit p:first-child {
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+}
+
+.clue {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.2rem;
+  border-left: 4px solid var(--accent);
+  background: var(--surface-2);
+  font: 1rem/1.6 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.clue p,
+.note p {
+  margin: 0;
+}
+
+.note {
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font: 0.95rem var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .postit {
+    rotate: none;
+  }
+}

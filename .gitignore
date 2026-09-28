@@ -1,0 +1,26 @@
+# Dependencies & build output
+node_modules
+dist
+dist-ssr
+coverage
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local env (VITE_EVENTS_ENDPOINT etc.)
+*.local
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.idea
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.sw?
+
+# Local Claude Code settings
+.claude/settings.local.json

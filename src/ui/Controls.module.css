@@ -1,0 +1,179 @@
+.sectionTitle {
+  margin: 0 0 0.75rem;
+  font: 700 0.85rem var(--font-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---- hints ---- */
+.hints {
+  margin: 2rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.hint {
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: var(--font-ui);
+}
+
+.hint summary {
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hint summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.hint p {
+  margin: 0;
+  padding: 0 0.9rem 0.8rem;
+  color: var(--muted);
+}
+
+/* ---- choices ---- */
+.choices {
+  display: grid;
+  gap: 0.6rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choice {
+  width: 100%;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: 600 1rem/1.35 var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.choice:hover {
+  background: var(--surface-3);
+  transform: translateX(3px);
+}
+
+.choice:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- answer form ---- */
+.answer {
+  margin: 2rem 0 0;
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.answerLabel {
+  display: block;
+  margin-bottom: 0.6rem;
+  font: 700 1.05rem var(--font-ui);
+}
+
+.answerRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.answerRow input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font: 1.05rem var(--font-mono);
+}
+
+.answerRow input:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* ---- header widgets ---- */
+.clock {
+  font: 600 0.95rem var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.clock[data-over] {
+  color: var(--accent);
+}
+
+.clockLimit {
+  color: var(--muted);
+}
+
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--surface-2);
+}
+
+.iconButton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- ending ---- */
+.end {
+  margin: 2rem 0 0;
+  padding: 1.5rem;
+  border: 1px solid var(--accent-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+  font-family: var(--font-ui);
+}
+
+.endTime {
+  margin: 0 0 0.25rem;
+  font: 700 2.25rem var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choice {
+    transition: none;
+  }
+
+  .choice:hover {
+    transform: none;
+  }
+}

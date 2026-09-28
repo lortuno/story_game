@@ -1,0 +1,54 @@
+{
+  "candado": {
+    "width": 433,
+    "height": 328
+  },
+  "header_police": {
+    "width": 1280,
+    "height": 452
+  },
+  "historial": {
+    "width": 1229,
+    "height": 613
+  },
+  "laberinto": {
+    "width": 1108,
+    "height": 758
+  },
+  "lengua": {
+    "width": 408,
+    "height": 306
+  },
+  "medal": {
+    "width": 1280,
+    "height": 854
+  },
+  "ojo": {
+    "width": 1280,
+    "height": 991
+  },
+  "oreja": {
+    "width": 903,
+    "height": 720
+  },
+  "pie": {
+    "width": 1280,
+    "height": 853
+  },
+  "poker_table": {
+    "width": 839,
+    "height": 504
+  },
+  "police": {
+    "width": 1280,
+    "height": 692
+  },
+  "tablet": {
+    "width": 1280,
+    "height": 853
+  },
+  "tarros": {
+    "width": 1280,
+    "height": 759
+  }
+}
