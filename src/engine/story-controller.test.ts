@@ -50,7 +50,7 @@ describe('StoryController', () => {
     expect(status).toBe('playing')
     expect(page?.blocks).toEqual([{ kind: 'heading', level: 2, text: 'Welcome' }])
     expect(page?.hints.map((hint) => hint.summary)).toEqual(['Ask a friend', 'Ask again'])
-    expect(page?.input).toEqual({ variable: 'answer', kind: 'password', label: 'Secret word:' })
+    expect(page?.input).toEqual({ variable: 'answer', kind: 'password', label: 'Secret word:', length: null })
     expect(presentation).toEqual({ scene: 'hall', music: 'calm' })
     expect(eventTypes()).toEqual(['session.started', 'page.shown'])
   })

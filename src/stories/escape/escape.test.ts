@@ -58,6 +58,23 @@ describe('escape story', () => {
     expect(current().page?.input?.kind).toBe('password')
   })
 
+  it('uses a 4-digit keypad for the basement lock and rejects anything else', () => {
+    const { controller, current, warnings } = play()
+    controller.start()
+    controller.submitInput('TenedoR')
+    controller.choose(3)
+    controller.choose(1)
+    expect(current().page?.input).toMatchObject({ kind: 'keypad', length: 4 })
+
+    for (const invalid of ['04a6', '042', '04261']) controller.submitInput(invalid)
+    expect(current().page?.path).toBe('sotano')
+    expect(current().stats.choices).toBe(3)
+    expect(warnings).toHaveLength(3)
+
+    controller.submitInput('0426')
+    expect(current().page?.path).toBe('cocina')
+  })
+
   it('routes every wrong answer to a retry page that returns to the puzzle', () => {
     const { controller, current } = play()
     controller.start()

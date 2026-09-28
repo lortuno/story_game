@@ -13,7 +13,7 @@ import { createMemorySaveRepository, SAVE_VERSION, type SaveGame, type SaveRepos
 import { createId } from './ids'
 import { normalizeAnswer } from './normalize'
 import { buildPageContent, type RawLine } from './page-builder'
-import type { ChoiceView, Page, PlayStats, Presentation, StorySnapshot } from './types'
+import type { ChoiceView, InputRequest, Page, PlayStats, Presentation, StorySnapshot } from './types'
 
 export interface CompiledInk {
   readonly json: string
@@ -158,6 +158,10 @@ export class StoryController {
       return
     }
     const answer = value.trim().slice(0, MAX_INPUT_LENGTH)
+    if (!isValidAnswer(input, answer)) {
+      this.warn(`Rejected answer for "${input.variable}": expected ${input.length} digits`)
+      return
+    }
     this.story.variablesState.$(input.variable, answer)
     this.emit('input.submitted', {
       path: page.path,
@@ -335,6 +339,12 @@ export class StoryController {
     this.snapshot = next
     for (const listener of this.listeners) listener()
   }
+}
+
+/** Keypad answers must be exactly `length` digits; other kinds accept any text. */
+function isValidAnswer(input: InputRequest, answer: string): boolean {
+  if (input.kind !== 'keypad') return true
+  return answer.length === input.length && /^[0-9]+$/.test(answer)
 }
 
 /** "tablet.mensaje.3.c-0" → "tablet.mensaje": drop ink's internal index/choice segments. */

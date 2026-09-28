@@ -26,7 +26,9 @@ export interface BuildResult {
 }
 
 const GROUP_STYLES: ReadonlySet<string> = new Set<GroupStyle>(['postit', 'list', 'olist', 'note', 'clue'])
-const INPUT_KINDS: ReadonlySet<string> = new Set<InputKind>(['text', 'password', 'code'])
+const INPUT_KINDS: ReadonlySet<string> = new Set<InputKind>(['text', 'password', 'code', 'keypad'])
+const DEFAULT_KEYPAD_LENGTH = 4
+const MAX_KEYPAD_LENGTH = 12
 const DEFAULT_HINT_SUMMARY = 'Pista'
 
 /** Where a line's text goes, decided by its tags. */
@@ -35,7 +37,7 @@ type LineRole =
   | { readonly kind: 'heading'; readonly level: 2 | 3 }
   | { readonly kind: 'group'; readonly style: GroupStyle }
   | { readonly kind: 'hint'; readonly summary: string }
-  | { readonly kind: 'input'; readonly variable: string; readonly inputKind: InputKind }
+  | { readonly kind: 'input'; readonly variable: string; readonly inputKind: InputKind; readonly length: number | null }
 
 interface LineDirectives {
   readonly role: LineRole
@@ -70,7 +72,7 @@ export function buildPageContent(lines: readonly RawLine[], previous: Presentati
       hints.push({ summary: role.summary, body: text })
     } else if (role.kind === 'input') {
       if (input) warnings.push(`Only one # input per page; ignoring input for "${role.variable}"`)
-      else input = { variable: role.variable, kind: role.inputKind, label: text }
+      else input = { variable: role.variable, kind: role.inputKind, label: text, length: role.length }
     } else if (text) {
       appendText(blocks, role, text)
     }
@@ -122,17 +124,25 @@ function readLineDirectives(tags: readonly ParsedTag[], warnings: string[]): Lin
 
 const PAGE_LEVEL_KEYS: ReadonlySet<string> = new Set(['scene', 'music', 'sfx', 'outcome', 'ending'])
 
+/** `# input: variable [kind] [length]` — length only applies to keypad inputs (digits, default 4). */
 function parseInputRole(tag: ParsedTag, warnings: string[]): LineRole | null {
-  const [variable, kind = 'text'] = tag.args
+  const [variable, kind = 'text', lengthArg] = tag.args
   if (!variable || !IDENTIFIER.test(variable)) {
     warnings.push(`# input needs a variable name, got "${tag.value}"`)
     return null
   }
   if (!INPUT_KINDS.has(kind)) {
     warnings.push(`Unknown input kind "${kind}", using "text"`)
-    return { kind: 'input', variable, inputKind: 'text' }
+    return { kind: 'input', variable, inputKind: 'text', length: null }
   }
-  return { kind: 'input', variable, inputKind: kind as InputKind }
+  if (kind !== 'keypad') return { kind: 'input', variable, inputKind: kind as InputKind, length: null }
+
+  const length = lengthArg === undefined ? DEFAULT_KEYPAD_LENGTH : Number(lengthArg)
+  if (!Number.isInteger(length) || length < 1 || length > MAX_KEYPAD_LENGTH) {
+    warnings.push(`Keypad length must be 1-${MAX_KEYPAD_LENGTH}, got "${lengthArg}"; using ${DEFAULT_KEYPAD_LENGTH}`)
+    return { kind: 'input', variable, inputKind: 'keypad', length: DEFAULT_KEYPAD_LENGTH }
+  }
+  return { kind: 'input', variable, inputKind: 'keypad', length }
 }
 
 function appendText(blocks: Block[], role: LineRole, text: string): void {

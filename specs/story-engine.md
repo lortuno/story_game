@@ -35,7 +35,7 @@ always anchor tags to text. Unknown tags produce a warning (dev console) and are
 | `# image: key` | line | Adds an image after the line. Several `image` tags on one line = gallery. Click opens a lightbox. |
 | `# caption: text` | line | Caption + alt text for the preceding `image` tag. |
 | `# hint: summary` | line | Moves the line out of the text into the hints panel: `summary` is the button, the line is the revealed hint. |
-| `# input: variable [text\|password\|code]` | page | The line becomes the label of a free-text field. The page must have **exactly one** choice (the submit button). On submit the trimmed answer (max 200 chars) is stored in the global `VAR variable`, then the choice is taken. `code` shows a numeric keypad on mobile. |
+| `# input: variable [text\|password\|code\|keypad] [length]` | page | The line becomes the label of the answer control. The page must have **exactly one** choice (the submit button). On submit the trimmed answer (max 200 chars) is stored in the global `VAR variable`, then the choice is taken. `code` is a text field with a numeric mobile keyboard. `keypad` is a combination lock: `length` digit dials (default 4, max 12) beside a 0-9 pad with ⌫ and `#` (submit). Only exactly `length` digits are accepted, enforced by the engine as well as the UI. Physical keys 0-9, Backspace, Enter and # also work. |
 | `# scene: key` / `# scene: none` | persistent | Header image from this page on. |
 | `# music: key` / `# music: stop` | persistent | Crossfades background music. Missing files are ignored with one warning. |
 | `# sfx: key` | page | Plays once when the page appears. |

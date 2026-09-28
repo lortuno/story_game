@@ -13,6 +13,7 @@ export const testStory: StoryDefinition = {
     description: 'A tiny story for tests.',
     lang: 'es',
     credits: '© test',
+    date: '2020-04-23',
     timeLimitMinutes: 10,
     cover: 'hall',
   },

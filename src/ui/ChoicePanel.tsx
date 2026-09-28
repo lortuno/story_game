@@ -3,6 +3,7 @@ import { useStoryContext } from '../app/story-context'
 import { MAX_INPUT_LENGTH } from '../engine/story-controller'
 import type { ChoiceView, InputRequest } from '../engine/types'
 import styles from './Controls.module.css'
+import { KeypadLock } from './KeypadLock'
 import { RichText } from './RichText'
 
 interface ChoicePanelProps {
@@ -13,6 +14,9 @@ interface ChoicePanelProps {
 }
 
 export function ChoicePanel({ choices, input, onChoose, onSubmit }: ChoicePanelProps) {
+  if (input?.kind === 'keypad' && choices[0]) {
+    return <KeypadLock label={input.label} length={input.length ?? 4} submitLabel={choices[0].text} onSubmit={onSubmit} />
+  }
   if (input && choices[0]) return <AnswerForm input={input} submitLabel={choices[0].text} onSubmit={onSubmit} />
 
   return (

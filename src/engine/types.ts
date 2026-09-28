@@ -4,7 +4,7 @@
  */
 
 export type GroupStyle = 'postit' | 'list' | 'olist' | 'note' | 'clue'
-export type InputKind = 'text' | 'password' | 'code'
+export type InputKind = 'text' | 'password' | 'code' | 'keypad'
 
 export interface ImageRef {
   readonly key: string
@@ -26,6 +26,8 @@ export interface InputRequest {
   readonly variable: string
   readonly kind: InputKind
   readonly label: string
+  /** Exact number of characters required (keypad inputs); null = free length. */
+  readonly length: number | null
 }
 
 export interface ChoiceView {
@@ -42,7 +44,7 @@ export interface Presentation {
 /** One screen of story: all content up to the next choice point. */
 export interface Page {
   readonly id: number
-  /** ink path where the page started, e.g. "sotano.candado". */
+  /** ink path where the page started, e.g. "sotano.keypad". */
   readonly path: string | null
   readonly blocks: readonly Block[]
   readonly hints: readonly Hint[]

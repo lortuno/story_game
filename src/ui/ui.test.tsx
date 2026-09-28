@@ -5,10 +5,11 @@ import { describe, expect, it } from 'vitest'
 import { StoryContext } from '../app/story-context'
 import { getStrings } from '../i18n/strings'
 import { testStory } from '../test/fixtures'
-import { formatDuration } from './format'
+import { formatDuration, formatStoryDate } from './format'
 import { PageView } from './PageView'
 import { PlayClock } from './PlayClock'
 import { RichText } from './RichText'
+import { StoryDate } from './StoryDate'
 import { StoryFigure } from './StoryFigure'
 
 const wrap = (node: ReactNode) =>
@@ -98,5 +99,18 @@ describe('formatDuration', () => {
     [-5, '0:00'],
   ])('%i ms → %s', (ms, expected) => {
     expect(formatDuration(ms)).toBe(expected)
+  })
+})
+
+describe('StoryDate', () => {
+  it('shows the in-world date in the story language with a machine-readable value', () => {
+    wrap(<StoryDate iso="2020-04-23" lang="es" />)
+    const date = screen.getByText('23/04/2020')
+    expect(date.closest('time')).toHaveAttribute('datetime', '2020-04-23')
+    expect(screen.getByText(/Fecha del caso/)).toBeInTheDocument()
+  })
+
+  it('falls back to the raw value when the date is invalid', () => {
+    expect(formatStoryDate('pronto', 'es')).toBe('pronto')
   })
 })

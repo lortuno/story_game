@@ -19,6 +19,8 @@ export interface StoryMeta {
   /** BCP-47 language of the story text; also selects UI strings. */
   readonly lang: string
   readonly credits: string
+  /** In-world date of the story (ISO yyyy-mm-dd), shown before the play clock. */
+  readonly date: string | null
   /** Soft target shown next to the play clock (not enforced). */
   readonly timeLimitMinutes: number | null
   /** Image key shown on the title screen. */

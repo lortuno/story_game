@@ -63,8 +63,19 @@ describe('buildPageContent', () => {
 
   it('turns an input line into the page input request', () => {
     const { content } = buildPageContent([line('Contraseña:', 'input: respuesta password')], EMPTY)
-    expect(content.input).toEqual({ variable: 'respuesta', kind: 'password', label: 'Contraseña:' })
+    expect(content.input).toEqual({ variable: 'respuesta', kind: 'password', label: 'Contraseña:', length: null })
     expect(content.blocks).toEqual([])
+  })
+
+  it.each([
+    ['input: code keypad', 4, 0],
+    ['input: code keypad 6', 6, 0],
+    ['input: code keypad 0', 4, 1],
+    ['input: code keypad many', 4, 1],
+  ])('parses "%s" as a keypad of length %i', (tag, length, warningCount) => {
+    const { content, warnings } = buildPageContent([line('Código:', tag)], EMPTY)
+    expect(content.input).toEqual({ variable: 'code', kind: 'keypad', label: 'Código:', length })
+    expect(warnings).toHaveLength(warningCount)
   })
 
   it('defaults unknown input kinds to text with a warning', () => {

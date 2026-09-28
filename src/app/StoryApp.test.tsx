@@ -22,6 +22,8 @@ describe('StoryApp', () => {
 
     expect(screen.getByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
     expect(screen.getByRole('timer')).toBeInTheDocument()
+    const date = screen.getByText('23/04/2020')
+    expect(date.compareDocumentPosition(screen.getByRole('timer')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 
     await user.click(screen.getByText('Ask a friend'))
     expect(services.received.map((event) => event.type)).toContain('hint.revealed')

@@ -5,6 +5,13 @@ import { inkPlugin } from './tooling/ink/vite-plugin-ink.ts'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [inkPlugin(), react()],
+  // Relative asset URLs: the build works at a domain root or in a sub-path
+  // (e.g. GitHub Pages project sites at /<repo>/). Safe because there is no client-side routing.
+  base: './',
+  // Listen on IPv4 too: by default Vite may bind only to ::1 on Windows, and browsers
+  // (or links) that resolve localhost to 127.0.0.1 then fail to connect.
+  server: { host: '127.0.0.1' },
+  preview: { host: '127.0.0.1' },
   build: {
     target: 'es2022',
     // Story images are already WebP-optimised by `npm run images`; keep them as files

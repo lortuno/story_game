@@ -1,7 +1,7 @@
 === apartamento ===
 El caso # heading # scene: header_police # music: investigacion
 Sigue las pistas y atrapa al asesino antes de que escape.
-Este juego se puede hacer solo o en grupo: solo necesitas un ordenador (o un móvil, aunque se ve mejor en PC) y un bloc de notas. Debería resolverse en menos de 69 minutos. Que corra el reloj...
+Este juego se puede hacer solo o en grupo: solo necesitas un ordenador (o un móvil, aunque se ve mejor en PC) y un bloc de notas. Debería resolverse en menos de 60 minutos. Que corra el reloj...
 Sois Jane Peralta y Tony Santiago, dos detectives de la comisaría de Aragón que siguen la pista del famoso criminal Murderchef. Hoy, 23 de abril de 2020, tras una ardua investigación, habéis avanzado en el caso y tenéis una dirección.
 Entráis en un apartamento algo destartalado, la última ubicación conocida a la que os ha llevado un testigo. Registráis el piso, bastante modesto; parece solo un sitio de paso, y quien vivía aquí se ha llevado todas sus cosas personales con mucha prisa.
 Apenas hay un montón de sábanas revueltas, una planta mustia y varios [libros](libros) polvorientos en la estantería... En el fondo de un cajón del armario aparece una tablet bloqueada con un pósit pegado por detrás.

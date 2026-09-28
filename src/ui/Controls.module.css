@@ -177,3 +177,22 @@
     transform: none;
   }
 }
+
+/* ---- in-world date (case-file stamp) ---- */
+.storyDate {
+  padding: 0.15rem 0.5rem;
+  border: 1.5px solid var(--accent-2);
+  border-radius: 4px;
+  color: var(--accent-2);
+  font: 700 0.9rem var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  rotate: -2deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storyDate {
+    rotate: none;
+  }
+}

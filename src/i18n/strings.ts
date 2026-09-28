@@ -9,9 +9,13 @@ export interface UiStrings {
   readonly soundOn: string
   readonly soundOff: string
   readonly playtime: string
+  readonly storyDate: string
   readonly timeLimit: (minutes: number) => string
   readonly hintsTitle: string
   readonly answerPlaceholder: string
+  readonly keypadDelete: string
+  readonly keypadEnter: (action: string) => string
+  readonly keypadStatus: (digits: string, length: number) => string
   readonly opensInNewTab: string
   readonly enlargeImage: (caption: string) => string
   readonly close: string
@@ -33,9 +37,20 @@ const es: UiStrings = {
   soundOn: 'Activar sonido',
   soundOff: 'Silenciar',
   playtime: 'Tiempo de juego',
+  storyDate: 'Fecha del caso',
   timeLimit: (minutes) => `Objetivo: menos de ${minutes} minutos`,
   hintsTitle: '¿Atascados? Pedid ayuda',
   answerPlaceholder: 'Escribe tu respuesta',
+  keypadDelete: 'Borrar último dígito',
+  keypadEnter: (action) => `Almohadilla: ${action}`,
+  keypadStatus: (digits, length) => {
+    if (digits.length === 0) return `Introduce ${length} dígitos`
+    const entered = digits.split('').join(' ')
+    const missing = length - digits.length
+    return missing === 0
+      ? `Combinación ${entered}. Pulsa almohadilla para probarla.`
+      : `Combinación ${entered}. ${missing === 1 ? 'Falta 1 dígito' : `Faltan ${missing} dígitos`}.`
+  },
   opensInNewTab: '(se abre en otra pestaña)',
   enlargeImage: (caption) => `Ampliar imagen: ${caption}`,
   close: 'Cerrar',

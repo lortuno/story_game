@@ -7,7 +7,7 @@ La sala está un poco revuelta; parece que hubo una pelea. Descubrir qué ha pas
 = mesa
 La mesa de póker # subheading # image: poker_table # caption: La última mano sobre la mesa
 [El mazo consta, contando con las cartas de la mesa, de 54 cartas. Los comodines se han dejado apartados para este tipo de póker.](?Sin embargo, hay una carta que sobra)
-Sus dotes de observación le llevan a resaltar que el número de cartas no cuadra. ¿Alguien ha hecho trampas? # hint: Estáis nerviosos: apoyaos en vuestra amiga Tina, que nunca falla.
+Sus dotes de observación le llevan a resaltar que el número de cartas no cuadra. ¿Alguien se ha sacado una carta de la manga para ganar? ¿Quién podría haberse enfadado porque su jugada se vea superada por la de un tramposo? # hint: Estáis nerviosos: apoyaos en vuestra amiga Tina, que nunca falla.
 ¿A qué jugador vais a perseguir?
 + [Julio Sánchez] -> inocente
 + [David Sebastián] -> sotano

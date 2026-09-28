@@ -8,6 +8,7 @@ import { PageView } from './PageView'
 import { PlayClock } from './PlayClock'
 import styles from './Screens.module.css'
 import { SoundToggle } from './SoundToggle'
+import { StoryDate } from './StoryDate'
 
 export interface StoryActions {
   readonly choose: (index: number) => void
@@ -50,6 +51,7 @@ export function StoryScreen({ snapshot, actions, muted, hasAudio, onMutedChange 
         <h1 className={styles.brandSmall}>
           {story.meta.title} <span>{story.meta.tagline}</span>
         </h1>
+        {story.meta.date && <StoryDate iso={story.meta.date} lang={story.meta.lang} />}
         <PlayClock playtimeMs={snapshot.playtimeMs} resumedAt={snapshot.resumedAt} limitMinutes={story.meta.timeLimitMinutes} />
         {hasAudio && <SoundToggle muted={muted} onChange={onMutedChange} />}
       </header>
