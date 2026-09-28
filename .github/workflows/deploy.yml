@@ -1,10 +1,12 @@
 # Builds the game and publishes dist/ to GitHub Pages.
 # One-time setup: repo Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Deploying from a branch other than the default one (here: develop) also needs
+# Settings → Environments → github-pages → Deployment branches and tags → add that branch.
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
   workflow_dispatch:
 
 permissions:
