@@ -35,6 +35,7 @@ Verify changes with `npm run ink:check`, `npm test`, `npm run typecheck`, `npm r
 - Skill format: Markdown with clear sections for when to use, how it works, examples
 - Skill placement: Curated in skills/; generated/imported under ~/.claude/skills/. See docs/SKILL-PLACEMENT-POLICY.md
 - Hook format: JSON with matcher conditions and command/notification hooks
+- Coding format: write all files, all tags, all filenames, all markup, all comments, all documentation in English; use US spelling and grammar; use Spanish date format (DD/MM/YYYY); use 2-space indentation; use LF line endings; use UTF-8 encoding; use semicolons in JS/TS; use single quotes in JS/TS; use double quotes in JSON; use PascalCase for React components; use camelCase for variables and functions; use UPPER_SNAKE_CASE for constants; use kebab-case for filenames and directories.
 
 ## Skills
 
