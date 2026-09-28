@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { assertHttpsLinks, collectImages, collectUrls, keyFromPath } from '../stories/assets'
 import { loadStory, resolveStoryId } from '../stories/registry'
@@ -9,12 +10,51 @@ import { createTestServices } from '../test/fixtures'
 
 describe('App', () => {
   it('loads the default story and shows its title screen', async () => {
+    localStorage.setItem('story-game:locale', 'es') // jsdom's browser language is en-US
     await act(async () => {
       render(<App storyId="escape" services={createTestServices()} />)
       await loadStory('escape')
     })
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Escape')
     expect(screen.getByRole('button', { name: 'Nueva partida' })).toBeInTheDocument()
+  })
+})
+
+describe('language switch', () => {
+  it('follows the browser language on a first visit', async () => {
+    await act(async () => {
+      render(<App storyId="escape" services={createTestServices()} />)
+      await loadStory('escape')
+    })
+    expect(screen.getByRole('button', { name: 'New game' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('switches the whole game to English, remembers it and keeps saves per language', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('story-game:locale', 'es') // jsdom's browser language is en-US
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+    await act(async () => {
+      render(<App storyId="escape" services={createTestServices()} />)
+      await loadStory('escape')
+    })
+    await user.click(screen.getByRole('button', { name: 'Nueva partida' }))
+    expect(screen.getByRole('heading', { name: 'El caso' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'English' }))
+    expect(screen.getByRole('button', { name: 'New game' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument() // Spanish save stays Spanish
+    expect(document.documentElement.lang).toBe('en-GB')
+    expect(localStorage.getItem('story-game:locale')).toBe('en')
+
+    await user.click(screen.getByRole('button', { name: 'New game' }))
+    expect(screen.getByRole('heading', { name: 'The case' })).toBeInTheDocument()
+    expect(screen.getByText('23/04/2020')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Español' }))
+    expect(screen.getByRole('button', { name: 'Continuar' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Idioma' })).toBeInTheDocument()
   })
 })
 

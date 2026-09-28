@@ -155,3 +155,10 @@
     animation: none;
   }
 }
+
+.titleCorner {
+  position: absolute;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  z-index: 1;
+}

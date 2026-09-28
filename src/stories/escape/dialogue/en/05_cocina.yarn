@@ -1,0 +1,40 @@
+title: cocina
+---
+<<sfx puerta>>
+Opening the door reveals a small kitchen full of utensils, ingredients and jars; some contain what are very probably body parts of his victims, which Murderchef has preserved for his recipes.
+A piece of paper reads "the ultimate recipe", next to the address of a website where you can look it up.
+<<jump receta>>
+===
+
+title: receta
+---
+[tip text="Hint\: it's a riddle"]The recipe[/tip] #subheading
+<<image tarros "Jars in Murderchef's kitchen">>
+Take the pieces in the order given, one at a time (or as many as indicated), and blend at 0.5 speed.
+0\:24 · [link key=huevos]2 eggs[/link] #block:olist
+0\:40 · [link key=mantequilla]Butter[/link] #block:olist
+2\:26 · [link key=sal]Salt[/link] #block:olist
+4\:19 · [link key=aceite]Oil[/link] #block:olist
+2\:44 · [link key=cebolla]1 onion[/link] #block:olist
+0\:04 · [link key=patatas]Two potatoes[/link] #block:olist
+See at\: murderchefssecretwebsite/xxxxxxxx #block:note
+<<hint "Ask your colleague Carlos Piedra for help.">>
+He points out that each video contains one word of a [b]riddle[/b], in that order, to form a sentence (the videos are in Spanish). If the ingredient says 2, it's two words. He advises you to write down what you hear and make sense of it as a whole.
+<<hint "Call Carlos Piedra again.">>
+What do you see with your eyes closed?
+Website address (what goes in place of the x's "_ _ _ _ _ _ _ _")\: #input:respuesta
+-> Visit the website
+    <<if normalize($respuesta) == "darkness">>
+        <<jump oscuridad>>
+    <<else>>
+        <<jump web_equivocada>>
+    <<endif>>
+===
+
+title: web_equivocada
+---
+<<set $fallos = $fallos + 1>>
+Error 404\: page not found. Murderchef doesn't leave his recipe out for just anyone to see. #outcome:fail
+-> Back to the recipe
+    <<jump receta>>
+===

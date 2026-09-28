@@ -1,4 +1,5 @@
 import { useStoryContext } from '../app/story-context'
+import { LanguageSwitch } from './LanguageSwitch'
 import styles from './Screens.module.css'
 
 interface TitleScreenProps {
@@ -14,6 +15,9 @@ export function TitleScreen({ canContinue, onNewGame, onContinue }: TitleScreenP
 
   return (
     <main className={styles.title}>
+      <div className={styles.titleCorner}>
+        <LanguageSwitch />
+      </div>
       {cover && (
         <img className={styles.cover} src={cover.src} width={cover.width} height={cover.height} alt="" fetchPriority="high" />
       )}

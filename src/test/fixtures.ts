@@ -3,25 +3,41 @@ import { createEventBus } from '../events/event-bus'
 import type { StoryEvent } from '../events/types'
 import { createMemorySaveRepository } from '../persistence/save-repository'
 import type { Services } from '../app/services'
-import type { StoryDefinition } from '../stories/types'
+import type { StoryContextValue } from '../app/story-context'
+import { getStrings } from '../i18n/strings'
+import { localizeStory } from '../stories/locale'
+import type { StoryDefinition, StoryMeta } from '../stories/types'
 
-export const testStory: StoryDefinition = {
+const meta: StoryMeta = {
+  title: 'Mini',
+  tagline: 'test',
+  description: 'Una historia mínima para los tests.',
+  lang: 'es',
+  credits: '© test',
+  date: '2020-04-23',
+  timeLimitMinutes: 10,
+  cover: 'hall',
+}
+
+export const testDefinition: StoryDefinition = {
   id: 'mini',
-  meta: {
-    title: 'Mini',
-    tagline: 'test',
-    description: 'A tiny story for tests.',
-    lang: 'es',
-    credits: '© test',
-    date: '2020-04-23',
-    timeLimitMinutes: 10,
-    cover: 'hall',
+  defaultLocale: 'es',
+  locales: {
+    es: { meta, dialogue: mini },
+    en: { meta: { ...meta, description: 'A tiny story for tests.', lang: 'en-GB' }, dialogue: mini },
   },
-  dialogue: mini,
   startNode: 'start',
   images: { hall: { src: '/hall.webp', width: 800, height: 400 } },
   audio: { music: { calm: '/calm.opus' }, sfx: {} },
   links: { docs: 'https://example.com/docs' },
+}
+
+export const testStory = localizeStory(testDefinition, 'es')
+
+export const testContext: StoryContextValue = {
+  story: testStory,
+  strings: getStrings('es'),
+  changeLocale: () => {},
 }
 
 export function createTestServices(): Services & { readonly received: StoryEvent[] } {

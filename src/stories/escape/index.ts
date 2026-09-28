@@ -1,28 +1,49 @@
 import { assertHttpsLinks, collectImages, collectUrls } from '../assets'
-import type { StoryDefinition } from '../types'
+import type { StoryDefinition, StoryMeta } from '../types'
+import dialogueEn from './dialogue/en/escape.yarnproject'
+import dialogueEs from './dialogue/es/escape.yarnproject'
 import dimensions from './images/dimensions.json'
-import dialogue from './dialogue/escape.yarnproject'
 
 const images = import.meta.glob<string>('./images/*.webp', { eager: true, query: '?url', import: 'default' })
 const music = import.meta.glob<string>('./audio/music/*.{opus,ogg,mp3,m4a}', { eager: true, query: '?url', import: 'default' })
 const sfx = import.meta.glob<string>('./audio/sfx/*.{opus,ogg,mp3,m4a}', { eager: true, query: '?url', import: 'default' })
 
+const shared = {
+  title: 'Escape',
+  tagline: 'the QUARANTINE',
+  date: '2020-04-23',
+  timeLimitMinutes: 60,
+  cover: 'header_police',
+} satisfies Partial<StoryMeta>
+
 const story: StoryDefinition = {
   id: 'escape',
-  meta: {
-    title: 'Escape',
-    tagline: 'the QUARANTINE',
-    description: 'Sigue las pistas y atrapa al asesino antes de que escape. Para jugar solo o en grupo: solo necesitas un bloc de notas.',
-    lang: 'es',
-    credits: '© lortuno. Imágenes: Unsplash.',
-    date: '2020-04-23',
-    timeLimitMinutes: 60,
-    cover: 'header_police',
+  defaultLocale: 'es',
+  locales: {
+    es: {
+      meta: {
+        ...shared,
+        description: 'Sigue las pistas y atrapa al asesino antes de que escape. Para jugar solo o en grupo: solo necesitas un bloc de notas.',
+        lang: 'es',
+        credits: '© lortuno. Imágenes: Unsplash.',
+      },
+      dialogue: dialogueEs,
+    },
+    en: {
+      meta: {
+        ...shared,
+        description: 'Follow the clues and catch the killer before he escapes. Play alone or in a group: all you need is a notepad.',
+        // en-GB keeps the in-world date as 23/04/2020, matching the clues.
+        lang: 'en-GB',
+        credits: '© lortuno. Images: Unsplash.',
+      },
+      dialogue: dialogueEn,
+    },
   },
-  dialogue,
   startNode: 'apartamento',
   images: collectImages(images, dimensions),
   audio: { music: collectUrls(music), sfx: collectUrls(sfx) },
+  // Riddles are not translated: the books and recipe videos are the Spanish originals in every language.
   links: assertHttpsLinks({
     libros: 'https://drive.google.com/open?id=1pAEPGQ9WOqGPhiStMQE-dK4xcCRW0XsF',
     huevos: 'https://www.youtube.com/watch?v=97SvRSXehM0',

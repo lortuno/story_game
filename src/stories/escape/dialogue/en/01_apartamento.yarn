@@ -1,0 +1,58 @@
+// Escape the Quarantine: English version. Keep node titles, options and jumps identical to ../es
+// (a parity test enforces it). Riddles are NOT translated: TenedoR, the post-it, the cipher,
+// 0426 and every name stay as in Spanish. Only the web answer differs (darkness / oscuridad).
+// Conventions (commands, #tags, markup): see specs/story-engine.md
+// In text lines write every ":" as "\:"; otherwise Yarn reads it as "Character: line".
+
+title: apartamento
+---
+// Last answer the player typed into an answer field (#input).
+<<declare $respuesta = "">>
+// Number of mistakes; changes the epilogue.
+<<declare $fallos = 0>>
+
+<<scene header_police>>
+<<music investigacion>>
+The case #heading
+Follow the clues and catch the killer before he escapes.
+You can play alone or in a group\: all you need is a computer (or a phone, although it looks better on a PC) and a notepad. It should take less than 60 minutes. The clock is ticking...
+You are Jane Peralta and Tony Santiago, two detectives from the Aragon police station on the trail of the infamous criminal Murderchef. Today, 23 April 2020, after a long investigation, you have made progress on the case and you have an address.
+You enter a rather run-down flat, the last known location a witness has led you to. You search the place, which is quite modest; it looks like somewhere just passed through, and whoever lived here took all their personal belongings in a great hurry.
+There is little more than a pile of rumpled sheets, a wilting plant and a few dusty [link key=libros]books[/link] on the shelf (they are in Spanish)... At the back of a wardrobe drawer you find a locked tablet with a sticky note on the back.
+<<jump tablet_bloqueada>>
+===
+
+title: tablet_bloqueada
+---
+Tablet note #subheading
+<<image tablet "Locked tablet with a sticky note">>
+ldrcc 5 #block:postit
+1 (0) #block:postit
+2 (1, 1), (3, 3), (8, 2) #block:postit
+3 (5, 4) #block:postit
+4 (0) #block:postit
+5 (1, 1), (4, 2) #block:postit
+6 (0) #block:postit
+7 (9, 5) #block:postit
+<<hint "Get help: call your unit's hacker.">>
+They tell you, quite confidently, that the password will be a real 7-letter word (in Spanish, like the books).
+<<hint "Call the hacker again (hopefully they won't get fed up).">>
+They suggest you start on page 5 of the CC Recipe Book (Libro de Recetas de CC), line 2...
+<<hint "Tell the hacker to stop beating around the bush.">>
+Despite your bad mood, they encourage you to believe in yourself. Just look carefully at how the words are written...
+Enter the tablet password\: #input:respuesta #kind:password
+-> Unlock
+    <<if $respuesta == "TenedoR">>
+        <<jump tablet>>
+    <<else>>
+        <<jump contrasena_incorrecta>>
+    <<endif>>
+===
+
+title: contrasena_incorrecta
+---
+<<set $fallos = $fallos + 1>>
+Wrong password. The tablet buzzes and returns to the lock screen. #outcome:fail
+-> Try again
+    <<jump tablet_bloqueada>>
+===

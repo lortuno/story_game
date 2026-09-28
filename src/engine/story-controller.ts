@@ -36,6 +36,10 @@ export interface StoryControllerOptions {
   readonly dialogue: CompiledDialogue
   /** Yarn node the story starts at. */
   readonly startNode: string
+  /** Language of this dialogue, reported in session events. */
+  readonly locale?: string
+  /** Storage slot for saves; defaults to storyId. Use one per language (saves don't replay across languages). */
+  readonly saveSlot?: string
   readonly events?: EventBus
   readonly saves?: SaveRepository
   readonly now?: () => number
@@ -75,6 +79,8 @@ type EventResult = 'content' | { readonly choices: readonly ChoiceView[]; readon
 
 export class StoryController {
   private readonly storyId: string
+  private readonly saveSlot: string
+  private readonly locale: string | null
   private readonly storyHash: string
   private readonly programJson: string
   private readonly startNode: string
@@ -99,6 +105,8 @@ export class StoryController {
 
   constructor(options: StoryControllerOptions) {
     this.storyId = options.storyId
+    this.saveSlot = options.saveSlot ?? options.storyId
+    this.locale = options.locale ?? null
     this.storyHash = options.dialogue.hash
     this.programJson = options.dialogue.json
     this.startNode = options.startNode
@@ -124,11 +132,11 @@ export class StoryController {
 
   /** Pure check (safe during render); stale saves are discarded by resume(). */
   hasSave(): boolean {
-    return this.saves.load(this.storyId)?.storyHash === this.storyHash
+    return this.saves.load(this.saveSlot)?.storyHash === this.storyHash
   }
 
   start(): void {
-    this.saves.clear(this.storyId)
+    this.saves.clear(this.saveSlot)
     this.lastSave = null
     this.setSnapshot({ ...TITLE_SNAPSHOT, status: 'playing', sessionId: this.newId(), resumedAt: this.now() })
     try {
@@ -137,7 +145,7 @@ export class StoryController {
       this.fail(error)
       return
     }
-    this.emit('session.started', { resumed: false, storyHash: this.storyHash })
+    this.emit('session.started', { resumed: false, storyHash: this.storyHash, locale: this.locale })
     this.showNextPage()
   }
 
@@ -151,7 +159,7 @@ export class StoryController {
       presentation = this.replay(save.steps)
     } catch (error) {
       this.warn(`Discarding a save that no longer replays: ${errorMessage(error)}`)
-      this.saves.clear(this.storyId)
+      this.saves.clear(this.saveSlot)
       return false
     }
 
@@ -166,7 +174,7 @@ export class StoryController {
       playtimeMs: save.playtimeMs,
       resumedAt: this.now(),
     })
-    this.emit('session.started', { resumed: true, storyHash: this.storyHash })
+    this.emit('session.started', { resumed: true, storyHash: this.storyHash, locale: this.locale })
     this.showNextPage()
     return true
   }
@@ -367,7 +375,7 @@ export class StoryController {
   private finish(page: Page, presentation: Presentation, stats: PlayStats): void {
     const playtimeMs = this.livePlaytime()
     this.setSnapshot({ ...this.snapshot, status: 'ended', page, presentation, stats, revealedHints: [], playtimeMs, resumedAt: null })
-    this.saves.clear(this.storyId)
+    this.saves.clear(this.saveSlot)
     this.lastSave = null
     this.emit('page.shown', { pageId: page.id, path: page.path, outcome: page.outcome, choiceCount: 0 })
     this.emit('story.ended', { ending: page.ending ?? 'end', playtimeMs, ...stats })
@@ -393,7 +401,7 @@ export class StoryController {
     if (!sessionId) return
     this.lastSave = {
       version: SAVE_VERSION,
-      storyId: this.storyId,
+      storyId: this.saveSlot,
       storyHash: this.storyHash,
       sessionId,
       steps: this.steps,
@@ -405,11 +413,11 @@ export class StoryController {
   }
 
   private loadCompatibleSave(): SaveGame | null {
-    const save = this.saves.load(this.storyId)
+    const save = this.saves.load(this.saveSlot)
     if (!save) return null
     if (save.storyHash !== this.storyHash) {
       this.warn('Saved game belongs to an older version of this story; discarding it')
-      this.saves.clear(this.storyId)
+      this.saves.clear(this.saveSlot)
       return null
     }
     return save

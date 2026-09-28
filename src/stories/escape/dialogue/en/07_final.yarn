@@ -1,0 +1,17 @@
+title: final
+---
+<<music victoria>>
+You discover he has written down his victims' names in invisible ink. After a thorough examination you conclude that the next victim is María Luisa González.
+You send a patrol to her address and... Congratulations! You caught Murderchef red-handed, before he could commit the crime. María Luisa is very grateful and your boss is going to award you a medal of honour for your excellent work.
+<<if $fallos == 0>>
+    Not a single misstep\: a textbook case.
+<<elseif $fallos == 1>>
+    You only stumbled once along the way. Not bad at all.
+<<else>>
+    You stumbled {$fallos} times along the way, but what matters is that Murderchef is behind bars.
+<<endif>>
+Congratulations #heading
+<<image police "Arrested">>
+<<image medal "Medal of honour">>
+The end #subheading #ending:victoria
+===

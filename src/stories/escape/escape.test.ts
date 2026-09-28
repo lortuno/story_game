@@ -1,20 +1,27 @@
 /**
- * Walkthrough of the real story: guarantees every puzzle answer from the original
- * PHP version still works and every command, image and link the Yarn scripts use exists.
+ * Walkthrough of the real story in every language: guarantees every puzzle answer from the
+ * original PHP version still works, every command, image and link the Yarn scripts use exists,
+ * and the translations keep the same structure (same nodes, options and jumps).
  */
 import { describe, expect, it } from 'vitest'
 import { StoryController } from '../../engine/story-controller'
-import { createMemorySaveRepository, type SaveRepository } from '../../persistence/save-repository'
 import type { Page, StyledText } from '../../engine/types'
+import { createMemorySaveRepository, type SaveRepository } from '../../persistence/save-repository'
+import { localizeStory } from '../locale'
 import story from './index'
 
-function play(saves: SaveRepository = createMemorySaveRepository()) {
+/** The only riddle whose answer is translated: "¿Qué se ve con los ojos cerrados?" */
+const WEB_ANSWER: Readonly<Record<string, string>> = { es: 'oscuridad', en: 'darkness' }
+
+function play(locale: string, saves: SaveRepository = createMemorySaveRepository()) {
+  const localized = localizeStory(story, locale)
   const warnings: string[] = []
   const pages: Page[] = []
   const controller = new StoryController({
     storyId: story.id,
-    dialogue: story.dialogue,
-    startNode: story.startNode,
+    dialogue: localized.dialogue,
+    startNode: localized.startNode,
+    locale,
     saves,
     onWarning: (message) => warnings.push(message),
   })
@@ -25,10 +32,8 @@ function play(saves: SaveRepository = createMemorySaveRepository()) {
   return { controller, pages, warnings, current: () => controller.getSnapshot() }
 }
 
-const WINNING_RUN = ['TenedoR', 3, 1, '0426', 'oscuridad', 'María Luisa González'] as const
-
-function playWinningRun(controller: StoryController): void {
-  for (const step of WINNING_RUN) {
+function playWinningRun(controller: StoryController, locale: string): void {
+  for (const step of ['TenedoR', 3, 1, '0426', WEB_ANSWER[locale], 'María Luisa González'] as const) {
     if (typeof step === 'number') controller.choose(step)
     else controller.submitInput(step)
   }
@@ -42,9 +47,11 @@ function textsOf(page: Page): StyledText[] {
   ]
 }
 
-describe('escape story', () => {
+const LOCALES = Object.keys(story.locales)
+
+describe.each(LOCALES)('escape story (%s)', (locale) => {
   it('can be completed with the original answers, without warnings', () => {
-    const { controller, pages, warnings, current } = play()
+    const { controller, pages, warnings, current } = play(locale)
     controller.start()
     expect(current().page?.path).toBe('apartamento')
 
@@ -56,7 +63,7 @@ describe('escape story', () => {
     expect(current().page?.path).toBe('sotano')
     controller.submitInput('0426')
     expect(current().page?.path).toBe('cocina')
-    controller.submitInput(' Oscuridad ')
+    controller.submitInput(` ${WEB_ANSWER[locale].toUpperCase()} `)
     expect(current().page?.path).toBe('oscuridad')
     controller.submitInput('María Luisa González')
 
@@ -68,8 +75,8 @@ describe('escape story', () => {
     expect(pages).toHaveLength(7)
   })
 
-  it('is case-sensitive for the tablet password, as in the original', () => {
-    const { controller, current } = play()
+  it('keeps the tablet password untranslated and case-sensitive', () => {
+    const { controller, current } = play(locale)
     controller.start()
     controller.submitInput('tenedor')
     expect(current().page?.outcome).toBe('fail')
@@ -78,8 +85,20 @@ describe('escape story', () => {
     expect(current().page?.input?.kind).toBe('password')
   })
 
+  it('only accepts the web answer of its own language', () => {
+    const other = LOCALES.find((code) => code !== locale) ?? locale
+    const { controller, current } = play(locale)
+    controller.start()
+    for (const step of ['TenedoR', 3, 1, '0426'] as const) {
+      if (typeof step === 'number') controller.choose(step)
+      else controller.submitInput(step)
+    }
+    controller.submitInput(WEB_ANSWER[other])
+    expect(current().page?.path).toBe('web_equivocada')
+  })
+
   it('uses a 4-digit keypad for the basement lock and rejects anything else', () => {
-    const { controller, current, warnings } = play()
+    const { controller, current, warnings } = play(locale)
     controller.start()
     controller.submitInput('TenedoR')
     controller.choose(3)
@@ -96,7 +115,7 @@ describe('escape story', () => {
   })
 
   it('routes every wrong answer to a retry page that returns to the puzzle', () => {
-    const { controller, current } = play()
+    const { controller, current } = play(locale)
     controller.start()
     controller.submitInput('TenedoR')
     controller.choose(0) // wrong route
@@ -113,7 +132,7 @@ describe('escape story', () => {
     controller.submitInput('0426')
     controller.submitInput('luz')
     controller.choose(0)
-    controller.submitInput('oscuridad')
+    controller.submitInput(WEB_ANSWER[locale])
     controller.submitInput('Pedro Cristóbal')
     expect(current().page?.path).toBe('victima_muerta')
     controller.choose(0)
@@ -122,12 +141,12 @@ describe('escape story', () => {
     expect(current().status).toBe('ended')
     expect(current().stats.failures).toBe(5)
     const text = current().page?.blocks.map((block) => ('text' in block ? block.text.text : '')).join(' ')
-    expect(text).toContain('5 veces')
+    expect(text).toContain('5')
   })
 
   it('resumes a saved game mid-story by replaying the decisions', () => {
     const saves = createMemorySaveRepository()
-    const first = play(saves)
+    const first = play(locale, saves)
     first.controller.start()
     first.controller.submitInput('tenedor') // fail + retry
     first.controller.choose(0)
@@ -135,7 +154,7 @@ describe('escape story', () => {
     first.controller.choose(3)
     first.controller.persist({ exitToTitle: true })
 
-    const second = play(saves)
+    const second = play(locale, saves)
     expect(second.controller.resume()).toBe(true)
     expect(second.current().page?.path).toBe('chalet')
     expect(second.current().presentation).toEqual({ scene: 'header_police', music: 'tension' })
@@ -146,11 +165,10 @@ describe('escape story', () => {
   })
 
   it('only references images and links that exist, has no speakers and no raw markup', () => {
-    const { controller, pages, current } = play()
+    const { controller, pages, current } = play(locale)
     controller.start()
-    playWinningRun(controller)
+    playWinningRun(controller, locale)
 
-    const scenes = new Set<string>()
     for (const page of pages) {
       for (const block of page.blocks) {
         if (block.kind === 'figure') {
@@ -166,7 +184,47 @@ describe('escape story', () => {
         }
       }
     }
-    scenes.add(current().presentation.scene ?? '')
-    for (const scene of scenes) if (scene) expect(story.images).toHaveProperty(scene)
+    const scene = current().presentation.scene
+    if (scene) expect(story.images).toHaveProperty(scene)
+  })
+})
+
+describe('escape story translations', () => {
+  interface Instruction {
+    readonly op: string
+    readonly node?: string
+  }
+  type Program = { readonly nodes: Readonly<Record<string, { readonly instructions: readonly Instruction[] }>> }
+
+  /** Per node: jump/detour targets and number of options — the structure every language must share. */
+  function structureOf(locale: string) {
+    const program = JSON.parse(story.locales[locale].dialogue.json) as Program
+    return Object.fromEntries(
+      Object.entries(program.nodes).map(([title, node]) => [
+        title,
+        {
+          jumps: [...new Set(node.instructions.filter((i) => i.op === 'runNode' || i.op === 'detour').map((i) => i.node))].sort(),
+          options: node.instructions.filter((i) => i.op === 'addOption').length,
+        },
+      ]),
+    )
+  }
+
+  it.each(LOCALES.filter((code) => code !== story.defaultLocale))('%s has the same nodes, options and jumps as the default', (locale) => {
+    expect(structureOf(locale)).toEqual(structureOf(story.defaultLocale))
+  })
+
+  it('keeps the web riddle blanks one letter per answer letter', () => {
+    const noteOf = (locale: string) => {
+      const { controller, current } = play(locale)
+      controller.start()
+      for (const step of ['TenedoR', 3, 1, '0426'] as const) {
+        if (typeof step === 'number') controller.choose(step)
+        else controller.submitInput(step)
+      }
+      const label = current().page?.input?.label.text ?? ''
+      return (label.match(/_/g) ?? []).length
+    }
+    for (const locale of LOCALES) expect(noteOf(locale), locale).toBe(WEB_ANSWER[locale].length)
   })
 })

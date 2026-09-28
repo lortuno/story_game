@@ -1,0 +1,7 @@
+{
+  "projectFileVersion": 4,
+  "projectName": "Escape the Quarantine (English)",
+  "baseLanguage": "en",
+  "sourceFiles": ["**/*.yarn"],
+  "excludeFiles": []
+}

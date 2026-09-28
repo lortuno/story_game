@@ -1,0 +1,34 @@
+title: chalet
+---
+<<music tension>>
+You reach a house on the outskirts, on a quiet street full of terraced houses. You go in through the back door, guns raised, but nobody comes out to meet you.
+In the living room you find the remains of an illegal poker game. The cards were left on the table with the chips from the last hand (and each seat has its player's name, as if the seats had been drawn before playing, which is extremely useful to you), but the players disappeared not long ago.
+The room is a bit of a mess; it looks like there was a fight. Working out what happened is the only way to figure out his next move. Hurry up, you're running out of time!
+<<jump mesa>>
+===
+
+title: mesa
+---
+The poker table #subheading
+<<image poker_table "The last hand on the table">>
+[tip text="And yet, there is one card too many"]Counting the cards on the table, the deck has 54 cards. The jokers have been set aside for this kind of poker.[/tip]
+<<hint "You're nervous: lean on your friend Tina, who never fails.">>
+Her keen eye makes her point out that the number of cards doesn't add up. Did someone pull a card out of their sleeve to win? Who might have been angry that their hand was beaten by a cheat's?
+Which player are you going to chase?
+-> Julio Sánchez
+    <<jump inocente>>
+-> David Sebastián
+    <<jump sotano>>
+-> Amador Pérez
+    <<jump inocente>>
+-> Roberto Aguilar
+    <<jump inocente>>
+===
+
+title: inocente
+---
+<<set $fallos = $fallos + 1>>
+Damn it! You chased an innocent man and your department has lost all credibility. Murderchef has escaped and you've been reassigned to burglaries. Looosers. #outcome:fail
+-> Go back and try again
+    <<jump mesa>>
+===

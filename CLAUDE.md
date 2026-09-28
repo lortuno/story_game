@@ -22,7 +22,7 @@ Interactive branching-story game: narrative logic in **Yarn Spinner 3** (`yarnsp
 - **src/engine/** - framework-agnostic `StoryController` (Yarn events → immutable page snapshots, replay-based saves, events), command/tag/markup parsers
 - **src/events/**, **src/persistence/**, **src/audio/** - event bus + sinks, `SaveRepository`, music/sfx manager
 - **src/app/**, **src/ui/** - React composition root and components (CSS modules, tokens in `src/styles/global.css`)
-- **src/stories/<id>/** - one folder per story: `index.ts` definition, `dialogue/` (.yarnproject + .yarn), `images/` (WebP via `npm run images`), `audio/`
+- **src/stories/<id>/** - one folder per story: `index.ts` definition, `dialogue/<lang>/` (.yarnproject + .yarn per language, structurally identical), `images/` (WebP via `npm run images`), `audio/`
 - **specs/story-engine.md** - commands, tags, markup, saves and events: read it before changing engine behavior or writing Yarn
 
 Verify changes with `npm run dialogue:check`, `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`.

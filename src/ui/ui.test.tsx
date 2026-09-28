@@ -4,8 +4,7 @@ import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 import { StoryContext } from '../app/story-context'
 import { plainText } from '../engine/markup'
-import { getStrings } from '../i18n/strings'
-import { testStory } from '../test/fixtures'
+import { testContext } from '../test/fixtures'
 import { formatDuration, formatStoryDate } from './format'
 import { PageView } from './PageView'
 import { PlayClock } from './PlayClock'
@@ -14,7 +13,7 @@ import { StoryDate } from './StoryDate'
 import { StoryFigure } from './StoryFigure'
 
 const wrap = (node: ReactNode) =>
-  render(<StoryContext value={{ story: testStory, strings: getStrings('es') }}>{node}</StoryContext>)
+  render(<StoryContext value={testContext}>{node}</StoryContext>)
 
 describe('RichText', () => {
   it('links only to allow-listed keys, in a new tab', () => {

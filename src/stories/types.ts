@@ -16,7 +16,7 @@ export interface StoryMeta {
   readonly title: string
   readonly tagline: string
   readonly description: string
-  /** BCP-47 language of the story text; also selects UI strings. */
+  /** BCP-47 language of the story text (e.g. "es", "en-GB"); selects UI strings and date format. */
   readonly lang: string
   readonly credits: string
   /** In-world date of the story (ISO yyyy-mm-dd), shown before the play clock. */
@@ -27,15 +27,29 @@ export interface StoryMeta {
   readonly cover: string | null
 }
 
-export interface StoryDefinition {
-  readonly id: string
+/** Everything that changes with the language. */
+export interface StoryContent {
   readonly meta: StoryMeta
   /** Compiled Yarn Spinner project (import of a .yarnproject file). */
   readonly dialogue: CompiledDialogue
-  /** Yarn node where a new game starts. */
+}
+
+export interface StoryDefinition {
+  readonly id: string
+  /** Locale code → translated content. Codes are short ("es", "en") and appear in `?lang=`. */
+  readonly locales: Readonly<Record<string, StoryContent>>
+  readonly defaultLocale: string
+  /** Yarn node where a new game starts (same in every language). */
   readonly startNode: string
   readonly images: Readonly<Record<string, StoryImage>>
   readonly audio: AudioLibrary
   /** Keys used by `[link key=…]` markup → https URLs. Only these URLs can be opened. */
   readonly links: Readonly<Record<string, string>>
+}
+
+/** A story resolved to one language: what the engine and the UI consume. */
+export interface LocalizedStory extends Omit<StoryDefinition, 'locales' | 'defaultLocale'>, StoryContent {
+  readonly locale: string
+  /** All locale codes the story is available in, for the language switch. */
+  readonly availableLocales: readonly string[]
 }

@@ -72,8 +72,8 @@ describe('compileYarnProject', () => {
     expect(result.warnings[0]).toContain('Possible infinite loop')
   })
 
-  it('compiles the real escape story with no errors, warnings or loops', () => {
-    const result = compileYarnProject(join(import.meta.dirname, '../../src/stories/escape/dialogue/escape.yarnproject'))
+  it.each(['es', 'en'])('compiles the real escape story (%s) with no errors, warnings or loops', (locale) => {
+    const result = compileYarnProject(join(import.meta.dirname, `../../src/stories/escape/dialogue/${locale}/escape.yarnproject`))
     expect(result.errors).toEqual([])
     expect(result.warnings).toEqual([])
     expect(findContentFreeLoops(JSON.parse(result.json ?? '{}') as ProgramLike)).toEqual({ unconditional: [], conditional: [] })

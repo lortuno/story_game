@@ -1,5 +1,8 @@
 /** UI chrome strings, selected by the story language. Story text itself lives in the Yarn scripts. */
 export interface UiStrings {
+  /** This language's own name, shown in the language switch ("Español", "English"). */
+  readonly languageName: string
+  readonly language: string
   readonly loading: string
   readonly loadFailed: string
   readonly newGame: string
@@ -28,6 +31,8 @@ export interface UiStrings {
 }
 
 const es: UiStrings = {
+  languageName: 'Español',
+  language: 'Idioma',
   loading: 'Cargando historia…',
   loadFailed: 'No se ha podido cargar la historia.',
   newGame: 'Nueva partida',
@@ -63,7 +68,45 @@ const es: UiStrings = {
   retry: 'Reintentar desde el último punto',
 }
 
-const catalogs: Readonly<Record<string, UiStrings>> = { es }
+const en: UiStrings = {
+  languageName: 'English',
+  language: 'Language',
+  loading: 'Loading story…',
+  loadFailed: 'The story could not be loaded.',
+  newGame: 'New game',
+  restartGame: 'Start over',
+  continueGame: 'Continue',
+  menu: 'Menu',
+  soundOn: 'Turn sound on',
+  soundOff: 'Mute',
+  playtime: 'Playing time',
+  storyDate: 'Case date',
+  timeLimit: (minutes) => `Goal: under ${minutes} minutes`,
+  hintsTitle: 'Stuck? Ask for help',
+  answerPlaceholder: 'Type your answer',
+  keypadDelete: 'Delete last digit',
+  keypadEnter: (action) => `Hash key: ${action}`,
+  keypadStatus: (digits, length) => {
+    if (digits.length === 0) return `Enter ${length} digits`
+    const entered = digits.split('').join(' ')
+    const missing = length - digits.length
+    return missing === 0
+      ? `Combination ${entered}. Press the hash key to try it.`
+      : `Combination ${entered}. ${missing === 1 ? '1 digit left' : `${missing} digits left`}.`
+  },
+  opensInNewTab: '(opens in a new tab)',
+  enlargeImage: (caption) => `Enlarge image: ${caption}`,
+  close: 'Close',
+  openOriginal: 'Open in a new tab',
+  endTitle: 'Case closed',
+  endStats: ({ choices, hints, failures }) =>
+    `${choices} decisions · ${hints} hints used · ${failures} ${failures === 1 ? 'mistake' : 'mistakes'}`,
+  playAgain: 'Play again',
+  errorTitle: 'The story stopped because of an error',
+  retry: 'Retry from the last checkpoint',
+}
+
+const catalogs: Readonly<Record<string, UiStrings>> = { es, en }
 
 export function getStrings(lang: string): UiStrings {
   return catalogs[lang] ?? catalogs[lang.split('-')[0]] ?? es

@@ -5,7 +5,7 @@
  * carry their value).
  */
 export interface StoryEventPayloads {
-  'session.started': { readonly resumed: boolean; readonly storyHash: string }
+  'session.started': { readonly resumed: boolean; readonly storyHash: string; readonly locale: string | null }
   'page.shown': {
     readonly pageId: number
     readonly path: string | null

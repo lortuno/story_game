@@ -1,10 +1,12 @@
 import { createContext, useContext } from 'react'
 import type { UiStrings } from '../i18n/strings'
-import type { StoryDefinition } from '../stories/types'
+import type { LocalizedStory } from '../stories/types'
 
 export interface StoryContextValue {
-  readonly story: StoryDefinition
+  readonly story: LocalizedStory
   readonly strings: UiStrings
+  /** Switches the whole story to another available language. */
+  readonly changeLocale: (locale: string) => void
 }
 
 /** Low-frequency, read-only data (assets, links, strings) needed deep in the tree. */

@@ -1,0 +1,40 @@
+title: sotano
+---
+Luckily you followed David Sebastián, who turns out to be your suspect's code name, and knowing his alias unlocks the possible whereabouts of a witness a colleague questioned last week.
+Following anyone else would have been a huge waste of time\: a few hours later, the squad captain tells you that the bodies of the other players have been found in rubbish bags a couple of blocks from the house. It seems Murderchef didn't take kindly to someone trying to cheat him...
+You reach a basement used as a laundry room. Your black-light torch picks up traces of blood in a corner\: this could be where Murderchef commits his murders. A poster with a map of a maze hangs on the wall. Santiago discovers a numeric keypad on a hidden door leading to another room.
+<<jump keypad>>
+===
+
+title: keypad
+---
+The maze poster #subheading
+<<image laberinto "Poster with the map of a maze">>
+Shape and colour are essential in cooking. To make the juice, for each piece of fruit you have to [tip text="Multiply"]add[/tip]\:
+Seven drops of water. #block:list
+Three slices of banana. #block:list
+Set the strawberry aside for the next preparation. #block:list
+Then [tip text="Add up"]mix in[/tip] the next one and stir.
+The door code #subheading
+<<hint "Ask Carlos Piedra for advice on this.">>
+He notes that shape and order also matter.
+<<hint "You've been at it for a while: call Carlos again.">>
+He tells you it is very important to take into account the 4 positions of the keypad\: multiply the numbers available for one piece, then those of another, and then add them up.
+<<hint "Carlos texts you 10 minutes later.">>
+Remember that zero is a number...
+Keypad combination\: #input:respuesta #kind:keypad #length:4
+-> Try the combination
+    <<if $respuesta == "0426">>
+        <<jump cocina>>
+    <<else>>
+        <<jump locked_panel>>
+    <<endif>>
+===
+
+title: locked_panel
+---
+<<set $fallos = $fallos + 1>>
+Oh no! The panel locks and won't accept any more combinations. You have to wait for backup to hack the door and, by then, Murderchef has murdered his next victim and you're taken off the case. You'll never get over this failure. Looosers. #outcome:fail
+-> Go back and try again
+    <<jump keypad>>
+===

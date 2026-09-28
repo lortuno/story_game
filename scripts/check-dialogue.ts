@@ -1,5 +1,6 @@
 /**
- * Compiles every story's Yarn project (src/stories/<id>/dialogue/*.yarnproject) and fails on errors.
+ * Compiles every Yarn project of every story (any .yarnproject under src/stories/<id>/dialogue,
+ * one per language) and fails on errors.
  * Run in CI and before builds: `npm run dialogue:check`.
  */
 import { existsSync, readdirSync } from 'node:fs'
@@ -12,7 +13,11 @@ const projects = readdirSync(STORIES_DIR, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => join(STORIES_DIR, entry.name, 'dialogue'))
   .filter((dir) => existsSync(dir))
-  .flatMap((dir) => readdirSync(dir).filter((name) => name.endsWith('.yarnproject')).map((name) => join(dir, name)))
+  .flatMap((dir) =>
+    readdirSync(dir, { recursive: true, encoding: 'utf8' })
+      .filter((name) => name.endsWith('.yarnproject'))
+      .map((name) => join(dir, name)),
+  )
 
 let failed = false
 for (const project of projects) {
@@ -27,5 +32,5 @@ for (const project of projects) {
   }
 }
 
-if (projects.length === 0) console.warn('No stories found under src/stories/*/dialogue/*.yarnproject')
+if (projects.length === 0) console.warn('No stories found under src/stories/*/dialogue/**/*.yarnproject')
 process.exit(failed ? 1 : 0)

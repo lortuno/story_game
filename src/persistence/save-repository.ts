@@ -17,6 +17,7 @@ const MAX_STEP_VALUE_LENGTH = 200
 
 export interface SaveGame {
   readonly version: typeof SAVE_VERSION
+  /** Save slot (story id, or story id + language). */
   readonly storyId: string
   /** Compiled story hash; a save from a different story build is discarded. */
   readonly storyHash: string

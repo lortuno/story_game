@@ -196,3 +196,39 @@
     rotate: none;
   }
 }
+
+/* ---- language switch (segmented ES | EN) ---- */
+.languageSwitch {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.languageOption {
+  min-width: 2.4rem;
+  min-height: 2.1rem;
+  padding: 0 0.6rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: 700 0.8rem var(--font-ui);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.languageOption:hover {
+  color: var(--text);
+}
+
+.languageOption[aria-pressed='true'] {
+  background: var(--accent-2);
+  color: var(--on-accent-2);
+}
+
+.languageOption:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}

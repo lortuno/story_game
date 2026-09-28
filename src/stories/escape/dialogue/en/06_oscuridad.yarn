@@ -1,0 +1,46 @@
+title: oscuridad
+---
+When you open the website, four pictures appear\: the body parts he is going to use in his special recipe. At the bottom of the page, in size 11 Moon type, you see a sinister sentence\: "Harvest on _".
+You examine the photos closely to learn more. There must be a clue hidden in them.
+<<jump ingredientes>>
+===
+
+title: ingredientes
+---
+Ingredients of the special recipe #subheading
+<<image ojo "María Luisa González">>
+<<image oreja "Pedro Cristóbal">>
+<<image lengua "Ignacio de Lucas">>
+<<image pie "Susana Romero">>
+<<hint "Ask your colleague Margarita Díez to go through the case file in case there's more information.">>
+She tells you that Pedro Cristóbal was murdered on 15 February this year.
+<<hint "Call the hacker (you miss them).">>
+They say they have no business in this kind of puzzle, but remind you that today is 23/04/2020.
+<<hint "Send a message to Tina, who always has an idea.">>
+She suggests you check a lunar calendar to understand when he is due to kill.
+Name of the next victim\: #input:respuesta
+-> Send a patrol
+    <<if normalize($respuesta) == "marialuisagonzalez">>
+        <<jump final>>
+    <<elseif normalize($respuesta) == "pedrocristobal">>
+        <<jump victima_muerta>>
+    <<else>>
+        <<jump direccion_equivocada>>
+    <<endif>>
+===
+
+title: victima_muerta
+---
+<<set $fallos = $fallos + 1>>
+How could it be Pedro, genius! Your boss tells you not to waste his time with protection orders for people who are already dead, and advises you to try harder if you don't want these to be your last minutes as police officers. #outcome:fail
+-> Go back and try again
+    <<jump ingredientes>>
+===
+
+title: direccion_equivocada
+---
+<<set $fallos = $fallos + 1>>
+Oops! You sent a patrol to the wrong address and let the criminal get away. Someone turns up dead a few hours later and Murderchef is still at large. You are kicked off the force and spend your days eating cheesy nachos in your parents' basement. Looosers. #outcome:fail
+-> Go back and try again
+    <<jump ingredientes>>
+===

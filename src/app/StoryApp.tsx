@@ -2,7 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { AudioManager } from '../audio/audio-manager'
 import { StoryController } from '../engine/story-controller'
 import { getStrings } from '../i18n/strings'
-import type { StoryDefinition } from '../stories/types'
+import type { LocalizedStory } from '../stories/types'
 import { StoryScreen, type StoryActions } from '../ui/StoryScreen'
 import { TitleScreen } from '../ui/TitleScreen'
 import type { Services } from './services'
@@ -10,23 +10,36 @@ import { StoryContext } from './story-context'
 import { useMutedPreference } from './use-muted-preference'
 
 interface StoryAppProps {
-  readonly story: StoryDefinition
+  readonly story: LocalizedStory
   readonly services: Services
+  /** Called after the current game is saved; the parent remounts the story in the new language. */
+  readonly onLocaleChange: (locale: string) => void
 }
 
-/** Wires one story to the engine, audio and UI. */
-export function StoryApp({ story, services }: StoryAppProps) {
+/** Wires one story, in one language, to the engine, audio and UI. */
+export function StoryApp({ story, services, onLocaleChange }: StoryAppProps) {
   const [controller] = useState(
     () => new StoryController({
         storyId: story.id,
         dialogue: story.dialogue,
         startNode: story.startNode,
+        locale: story.locale,
+        // Saves replay decisions, and answers differ per language: keep one save per language.
+        saveSlot: `${story.id}.${story.locale}`,
         events: services.events,
         saves: services.saves,
       }),
   )
   const [audio] = useState(() => new AudioManager(story.audio))
-  const [context] = useState(() => ({ story, strings: getStrings(story.meta.lang) }))
+  const [context] = useState(() => ({
+    story,
+    strings: getStrings(story.meta.lang),
+    changeLocale: (locale: string) => {
+      if (locale === story.locale) return
+      controller.persist()
+      onLocaleChange(locale)
+    },
+  }))
   const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot)
   const [muted, setMuted] = useMutedPreference()
 
@@ -47,6 +60,10 @@ export function StoryApp({ story, services }: StoryAppProps) {
   }, [audio, page])
 
   useEffect(() => () => audio.stopAll(), [audio])
+
+  useEffect(() => {
+    document.documentElement.lang = story.meta.lang
+  }, [story.meta.lang])
 
   // Keep playtime when the tab is hidden or closed.
   useEffect(() => {

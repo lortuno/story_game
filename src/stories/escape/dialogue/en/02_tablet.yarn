@@ -1,0 +1,38 @@
+title: tablet
+---
+<<sfx desbloqueo>>
+You have unlocked the tablet. The email app is open, with one message highlighted on the screen. You also immediately check the history of the most recently visited locations. Curiously, they all match places where Murderchef has killed following his modus operandi.
+You have a hunch that the places and the message are connected somehow.
+<<jump mensaje>>
+===
+
+title: mensaje
+---
+Location history #subheading
+<<image historial "Map with the location history">>
+Message from\: Anonymous #subheading
+ñs vsds rdys urmfp rm ñs dohirmyr fotrvvopm. Br im nñpwir jsvos fpmfr giodyr rm kimop, fpd nñpwird jsvos fpmfr giodyr rm dr`yor,ntr. Ims ,smxsms frdfr yi tiys fr ,sup. Fpd vsdsd fotrvvopm yi bodoys fr grntrtp. Mpd br,pd `tpmyp. #block:clue
+<<hint "Check with your unit's hacker.">>
+They reckon the encrypted message may be based on some kind of letter substitution on a qwerty keyboard.
+<<hint "Ask Sergeant Tomás Núñez for guidance.">>
+He suggests you work out how to get to the places in the history.
+<<hint "Beg the hacker again (qwer-what?).">>
+They think it could be decoded by shifting one letter to the left.
+Which way are you going to go now?
+-> Up, right, down, up, up, right, left
+    <<jump pista_falsa>>
+-> Up, right, up, right, down, up, left
+    <<jump pista_falsa>>
+-> Up, right, down, up, left, up, right
+    <<jump pista_falsa>>
+-> Up, left, up, right, down, up, right
+    <<jump chalet>>
+===
+
+title: pista_falsa
+---
+<<set $fallos = $fallos + 1>>
+Oops! You followed the wrong lead and lost Murderchef's trail. You are kicked off the force and spend your days eating crisps in the gloom of your bedroom. Looosers. #outcome:fail
+-> Go back and try again
+    <<jump mensaje>>
+===

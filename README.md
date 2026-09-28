@@ -3,7 +3,8 @@
 Interactive branching stories with decisions, pictures and music.
 Narrative logic is written in [Yarn Spinner](https://docs.yarnspinner.dev/) 3; the player is a React 19 + Vite app.
 
-The first story, **Escape the Quarantine** (`src/stories/escape`), is a port of the original PHP escape room (2020).
+The first story, **Escape the Quarantine** (`src/stories/escape`), is a port of the original PHP escape room (2020),
+playable in **Spanish and English** (ES | EN switch; `?lang=en` also works).
 
 ## Quick start
 
@@ -49,7 +50,7 @@ Yarn (.yarnproject) ──build time──▶ program JSON (+hash) ──▶ Sto
 ## Writing a story
 
 1. Create `src/stories/<id>/` (copy `escape/index.ts` as a template) and register it in `src/stories/registry.ts`.
-2. Write Yarn in `dialogue/*.yarn` with a `dialogue/<id>.yarnproject`; set `startNode` in `index.ts`. Escape every narrative `:` as `\:`. The Yarn Spinner VS Code extension gives syntax highlighting and a node graph.
+2. Write Yarn in `dialogue/<lang>/*.yarn` with a `dialogue/<lang>/<id>.yarnproject` per language, and register each in `locales` in `index.ts` (see "Languages" in the spec); set `startNode`. Escape every narrative `:` as `\:`. The Yarn Spinner VS Code extension gives syntax highlighting and a node graph.
 3. Add images: `npm run images -- --src path/to/originals --story <id>`.
 4. Drop music/sfx into `audio/music/` and `audio/sfx/` (Opus/OGG recommended; keep loops short and mono where possible).
 5. `npm run dialogue:check && npm test`.
